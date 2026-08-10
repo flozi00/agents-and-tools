@@ -33,6 +33,12 @@
       "version": "1.0.0"
     },
     {
+      "id": "ms365_graph_mail_send",
+      "name": "Microsoft 365 Mail (Graph)",
+      "description": "Sendet Ergebnisse per Microsoft Graph an die eigene E-Mail-Adresse der angemeldeten Person — optional mit Dateianhängen aus der Agent-VM.",
+      "version": "1.0.0"
+    },
+    {
       "id": "tanss_read",
       "name": "TANSS Read-Only API",
       "description": "Read-only OpenWebUI tool for TANSS — tickets, companies, employees, supports, search, plus a generic GET/query passthrough covering the whole readable TANSS API.",
