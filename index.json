@@ -31,6 +31,13 @@
       "name": "IBAN-Prüfung",
       "description": "Prüft IBANs auf formale Gültigkeit (Prüfziffer nach ISO 13616) und formatiert sie zur besseren Lesbarkeit.",
       "version": "1.0.0"
+    },
+    {
+      "id": "tanss_read",
+      "name": "TANSS Read-Only API",
+      "description": "Read-only OpenWebUI tool for TANSS ticket, company, employee, and search endpoints.",
+      "version": "0.1.8",
+      "requirements": "requests"
     }
   ]
 }
