@@ -1,0 +1,36 @@
+{
+  "version": 1,
+  "assistants": [
+    {
+      "id": "email-profi",
+      "name": "E-Mail-Profi",
+      "description": "Formuliert und überarbeitet professionelle E-Mails auf Deutsch — von Stichpunkten zur versandfertigen Nachricht.",
+      "version": "1.0.0",
+      "tools": []
+    },
+    {
+      "id": "finanz-assistent",
+      "name": "Finanz-Assistent",
+      "description": "Hilft bei kaufmännischen Rechnungen und prüft Zahlungsdaten — rechnet exakt mit Werkzeugen statt zu schätzen.",
+      "version": "1.0.0",
+      "tools": [
+        "calculator",
+        "iban_validator"
+      ]
+    }
+  ],
+  "tools": [
+    {
+      "id": "calculator",
+      "name": "Rechner",
+      "description": "Exakter Taschenrechner für Grundrechenarten, Potenzen, Prozente und Rundung — ohne Schätzfehler des Sprachmodells.",
+      "version": "1.0.0"
+    },
+    {
+      "id": "iban_validator",
+      "name": "IBAN-Prüfung",
+      "description": "Prüft IBANs auf formale Gültigkeit (Prüfziffer nach ISO 13616) und formatiert sie zur besseren Lesbarkeit.",
+      "version": "1.0.0"
+    }
+  ]
+}
