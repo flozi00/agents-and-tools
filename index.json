@@ -35,8 +35,15 @@
     {
       "id": "tanss_read",
       "name": "TANSS Read-Only API",
-      "description": "Read-only OpenWebUI tool for TANSS ticket, company, employee, and search endpoints.",
-      "version": "0.1.8",
+      "description": "Read-only OpenWebUI tool for TANSS — tickets, companies, employees, supports, search, plus a generic GET/query passthrough covering the whole readable TANSS API.",
+      "version": "0.2.0",
+      "requirements": "requests"
+    },
+    {
+      "id": "tanss_write",
+      "name": "TANSS Write API",
+      "description": "Write tool for TANSS — create and update tickets, add comments, book time tracking entries (supports), and send ticket mails.",
+      "version": "0.1.0",
       "requirements": "requests"
     }
   ]

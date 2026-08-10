@@ -1,8 +1,8 @@
 """
 title: TANSS Read-Only API
-description: Read-only OpenWebUI tool for TANSS ticket, company, employee, and search endpoints.
+description: Read-only OpenWebUI tool for TANSS — tickets, companies, employees, supports, search, plus a generic GET/query passthrough covering the whole readable TANSS API.
 author: flozi00
-version: 0.1.8
+version: 0.2.0
 requirements: requests
 """
 
@@ -15,6 +15,23 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import requests
 from pydantic import BaseModel, Field
+
+
+# GET endpoints that TANSS implements with side effects (send mail, restart
+# services, clear caches, trigger syncs). A read-only tool must refuse them even
+# though the HTTP method is GET. Matched case-insensitively against the path.
+MUTATING_GET_RE = re.compile(
+    r"/serviceCap/request/"
+    r"|/mails/retry/resend/"
+    r"|/sysTasks/(?:execute/|restart)"
+    r"|/telephoneSystems/restart"
+    r"|/starface/(?:resubscribeAll|subscribe)"
+    r"|/timeline/outlookSync"
+    r"|/util/reimportSolr"
+    r"|/util/graph/invalidateAccessTokenCache"
+    r"|/cache/clear/",
+    re.IGNORECASE,
+)
 
 
 def get_env_value(*keys: str) -> str:
@@ -68,7 +85,7 @@ class Tools:
         self._http_session = requests.Session()
 
     def _user_agent(self) -> str:
-        return "OpenWebUI-TANSS-Tool/0.1.5"
+        return "OpenWebUI-TANSS-Tool/0.2.0"
 
     def _normalized_auth_mode(self) -> str:
         auth_mode = (self.valves.auth_mode or "auto").strip().lower()
@@ -462,6 +479,24 @@ class Tools:
         if normalized_method not in allowed_methods:
             raise ValueError(
                 f"Method {normalized_method} is not allowed. This tool is read-only."
+            )
+
+        # Central read-only guard for every caller (dedicated methods, api_get,
+        # api_query, test_login). TANSS uses PUT for its read-only list queries
+        # and GET for a few side-effectful actions, so method alone is not a
+        # safe signal: allow PUT only for allowlisted query paths, and block
+        # the known mutating GETs. Also stops path-injection through an id
+        # (e.g. get_ticket("1/serviceCap/request/5/9999")).
+        guard_path = (path if path.startswith("/") else "/" + path).rstrip("/")
+        if normalized_method == "PUT" and guard_path not in self.QUERY_PATHS:
+            raise ValueError(
+                "PUT is only allowed for read-only query endpoints. Allowed: "
+                + ", ".join(sorted(self.QUERY_PATHS))
+            )
+        if normalized_method == "GET" and MUTATING_GET_RE.search(guard_path):
+            raise ValueError(
+                f"GET {guard_path} has side effects and is blocked by this "
+                "read-only tool."
             )
 
         login_context = self._perform_login()
@@ -1381,3 +1416,114 @@ class Tools:
         }
 
         return self._request("PUT", "/api/v1/search", json_body=payload)
+
+    # Read-only list/query endpoints that TANSS implements as HTTP PUT with a
+    # filter body. Exact-match allowlist so writable PUT routes (e.g.
+    # /api/v1/tickets/{id}) can never be reached through this tool.
+    QUERY_PATHS = frozenset(
+        {
+            "/api/v1/callbacks",
+            "/api/v1/chats",
+            "/api/v1/components",
+            "/api/v1/contracts/from/parameters",
+            "/api/v1/documents",
+            "/api/v1/employees/birthdays",
+            "/api/v1/escalations",
+            "/api/v1/filesAndLinks",
+            "/api/v1/mails",
+            "/api/v1/offers",
+            "/api/v1/pcs",
+            "/api/v1/peripheries",
+            "/api/v1/phoneCalls",
+            "/api/v1/planning/overview",
+            "/api/v1/remoteSupports",
+            "/api/v1/search",
+            "/api/v1/sla",
+            "/api/v1/softwarelicenses",
+            "/api/v1/supports/list",
+            "/api/v1/supports/list/properties",
+            "/api/v1/supports/statistics",
+            "/api/v1/tanssEvents",
+            "/api/v1/templates",
+            "/api/v1/tickets",
+            "/api/v1/tickets/list/properties",
+            "/api/v1/timeline",
+            "/api/v1/timestamps/manualBooking",
+            "/api/v1/vacationRequests/list",
+        }
+    )
+
+    def _normalize_api_path(self, path: str) -> str:
+        normalized = (path or "").strip()
+        if not normalized:
+            raise ValueError("path must not be empty.")
+        if not normalized.startswith("/"):
+            normalized = "/" + normalized
+        if not normalized.startswith("/api/"):
+            normalized = "/api/v1" + normalized
+        return normalized
+
+    def api_get(
+        self, path: str, params: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
+        """
+        Generic read-only GET for any TANSS API endpoint. Use this for all
+        readable data the dedicated methods do not cover.
+
+        Useful endpoints (all under /api/v1, prefix may be omitted):
+        - /companies/{id}, /companies/search?query=..., /companies/departments,
+          /companies/{id}/bookableSupport
+        - /employees/{id}, /employees/technicians, /employees/freelancers/{companyId}
+        - /supports/{supportId}, /supports/appointments/{ticketId}
+        - lookup lists: /tickets/status, /tickets/types, /tickets/waitingStates,
+          /priorities, /supportTypes/active, /accountingTypes,
+          /supports/notChargedReason
+        - projects: /tickets/projects, /projects/{projectId}/phases,
+          /projects/{projectId}/tickets, /projects/{projectId}/status
+        - search: /search/tickets, /search/employees, /search/devices,
+          /search/knowledgebase, /search/supports (query param: query=...)
+        - knowledge base: /knowledgeBase/browser, /knowledgeBase/articles/{id}
+        - time tracking: /timers, /timestamps?from=..&till=.., /timestamps/info,
+          /overtime/balance, /vacationRequests/vacationDays/year/{year}
+        - devices: /pcs/{pcId}, /peripheries/{peripheryId},
+          /components/{componentId}, /softwarelicenses/{id},
+          /domains/company/{id}, /emailAccounts/company/{companyId},
+          /ips/{assignmentType}/{assignmentId}
+        - misc: /mails/{mailId}, /tickets/{ticketId}/screenshots,
+          /entityFiles/{linkType}/{linkId}, /tags, /tags/assignment,
+          /checklists/assignment/{linkTypeId}/{linkId}, /sla, /holidays,
+          /availability, /ticketBoard, /git/commits/ticket/{ticketId},
+          /tickets/{id}/contractInfos
+        """
+        return self._request("GET", self._normalize_api_path(path), params=params)
+
+    def api_query(
+        self, path: str, filters: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
+        """
+        Run one of the TANSS read-only list/query endpoints that expect an
+        HTTP PUT with a JSON filter body. Only known read-only list paths are
+        allowed; write endpoints are rejected.
+
+        Examples (prefix /api/v1 may be omitted):
+        - path=/api/v1/tickets, filters={"companies": [7], "itemsPerPage": 50}
+          — configurable ticket list; more filter keys: staff, states, types,
+          projectId, includeDoneTickets, page, modifiedWithinTimeframe
+        - path=/api/v1/supports/list, filters={"companies": [7], "employees": [3]}
+        - path=/api/v1/supports/statistics — aggregated support amounts
+        - other list paths: /mails, /chats, /phoneCalls, /documents, /pcs,
+          /peripheries, /components, /softwarelicenses, /offers, /sla,
+          /escalations, /templates, /callbacks, /remoteSupports,
+          /filesAndLinks, /vacationRequests/list, /timeline,
+          /planning/overview, /contracts/from/parameters,
+          /employees/birthdays, /tanssEvents
+
+        Pass an empty filters object for an unfiltered (default) list.
+        """
+        normalized = self._normalize_api_path(path).rstrip("/")
+        if normalized not in self.QUERY_PATHS:
+            raise ValueError(
+                "Path not in the read-only query allowlist. Allowed: "
+                + ", ".join(sorted(self.QUERY_PATHS))
+            )
+        return self._request("PUT", normalized, json_body=filters or {})
