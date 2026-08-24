@@ -15,6 +15,27 @@ from pydantic import create_model
 
 HUB = Path(__file__).resolve().parent.parent
 
+# Some tools import the host application. Importing it for real would drag in the
+# database and config layers, so outside the app we stand in a stub: this check is
+# about the tool file, not about the host.
+try:
+    import open_webui  # noqa: F401
+except ImportError:
+    class _Stub(types.ModuleType):
+        def __getattr__(self, name):
+            return type(name, (), {})
+
+    for module_name in (
+        'open_webui',
+        'open_webui.models',
+        'open_webui.models.users',
+        'open_webui.models.files',
+        'open_webui.utils',
+        'open_webui.utils.chat',
+        'open_webui.constants',
+    ):
+        sys.modules.setdefault(module_name, _Stub(module_name))
+
 # Same rule as backend/open_webui/utils/plugin.py::extract_frontmatter.
 FRONTMATTER_RE = re.compile(r'^\s*([a-z_]+):\s*(.*)\s*$', re.IGNORECASE)
 
@@ -41,8 +62,13 @@ for tool_file in sorted(HUB.glob('tools/*/tool.py')):
         for key in ('title', 'description', 'version'):
             assert front.get(key), f'frontmatter is missing "{key}"'
 
-        module = types.ModuleType(tool_id)
-        module.__dict__['__name__'] = tool_id
+        # Mirrors load_tool_module_by_id: the module must be registered in
+        # sys.modules before exec, or pydantic cannot resolve the annotations of
+        # nested models such as Valves/UserValves.
+        module_name = f'tool_{tool_id}'
+        module = types.ModuleType(module_name)
+        sys.modules[module_name] = module
+        module.__dict__['__file__'] = str(tool_file)
         exec(compile(content, str(tool_file), 'exec'), module.__dict__)
         tools = module.__dict__['Tools']()
 

@@ -12,9 +12,9 @@ source_url: https://gitlab.opencode.de/kommi/adapter/osm-adapter
 # --------------------------------------------------------------------------
 # Herkunft / Provenance
 #
-# Übernommen aus dem KommI-Adapter-Katalog (openCode). Der Code ist
-# gegenüber dem Original unverändert; ergänzt wurden ausschließlich dieser
-# Herkunftshinweis und Katalog-Metadaten im Kopf.
+# Übernommen aus dem KommI-Adapter-Katalog (openCode). Ergänzt wurden dieser
+# Herkunftshinweis und Katalog-Metadaten im Kopf; der Code selbst ist
+# unverändert.
 #
 #   Projekt : OSM-Adapter
 #   Quelle  : https://gitlab.opencode.de/kommi/adapter/osm-adapter

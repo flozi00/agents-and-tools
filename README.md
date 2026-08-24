@@ -67,8 +67,7 @@ only list tool ids from this hub; they are installed as dependencies.
 
 ## Übernommene Werkzeuge
 
-Werkzeuge aus fremden Projekten dürfen nur mit ausdrücklicher Lizenz
-übernommen werden. Herkunft, Rechteinhaber und Lizenz stehen in
+Herkunft, Urheber und Lizenz übernommener Werkzeuge stehen in
 [THIRD_PARTY.md](THIRD_PARTY.md) und zusätzlich im Kopf jeder betroffenen
 `tool.py`, damit die Angabe auch bei einer installierten Kopie erhalten
 bleibt.
