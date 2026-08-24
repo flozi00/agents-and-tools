@@ -17,6 +17,43 @@
         "calculator",
         "iban_validator"
       ]
+    },
+    {
+      "id": "geodaten-assistent",
+      "name": "Geodaten-Assistent",
+      "description": "Beantwortet Ortsfragen mit OpenStreetMap — findet Koordinaten zu Adressen, berechnet Entfernungen, prüft die Lage in Stadtteilen oder Gemeindegrenzen und zeichnet das Ergebnis in eine Karte.",
+      "version": "1.0.0",
+      "tools": [
+        "openstreetmap"
+      ]
+    },
+    {
+      "id": "gitlab-entwickler",
+      "name": "GitLab-Entwickler",
+      "description": "Arbeitet direkt in GitLab-Repositories — liest Code, legt Arbeitsbranches an, committet Änderungen, öffnet Merge Requests und untersucht fehlgeschlagene CI-Pipelines.",
+      "version": "1.0.0",
+      "tools": [
+        "gitlab_repo",
+        "gitlab_ci"
+      ]
+    },
+    {
+      "id": "sensordaten-assistent",
+      "name": "Sensordaten-Assistent",
+      "description": "Fragt Messwerte aus einer Niotix-Plattform ab (Smart-City-Sensorik) und stellt Zeitreihen als Tabelle mit Quellenangabe dar.",
+      "version": "1.0.0",
+      "tools": [
+        "niotix_sensors"
+      ]
+    },
+    {
+      "id": "tabellen-analyst",
+      "name": "Tabellen-Analyst",
+      "description": "Wertet angehängte Excel-, CSV- und PDF-Tabellen aus — Spaltenprofil, Pivot-Auswertungen, Zeitreihen und statistische Tests, gerechnet statt geschätzt.",
+      "version": "1.0.0",
+      "tools": [
+        "table_analysis"
+      ]
     }
   ],
   "tools": [
@@ -25,6 +62,20 @@
       "name": "Rechner",
       "description": "Exakter Taschenrechner für Grundrechenarten, Potenzen, Prozente und Rundung — ohne Schätzfehler des Sprachmodells.",
       "version": "1.0.0"
+    },
+    {
+      "id": "gitlab_ci",
+      "name": "GitLab CI Pipeline Results Tool",
+      "description": "Liest GitLab-CI/CD-Ergebnisse: Pipelines, Jobs, Testberichte und Job-Logs — rein lesend, für die Fehlersuche an fehlgeschlagenen Pipelines.",
+      "version": "0.1.0",
+      "requirements": "requests"
+    },
+    {
+      "id": "gitlab_repo",
+      "name": "GitLab Repository Coding Tool",
+      "description": "Liest und schreibt GitLab-Repositories über die REST-API — Dateien lesen, Branches und Forks anlegen, Änderungen committen, Merge Requests und Issues verwalten.",
+      "version": "0.3.4",
+      "requirements": "requests"
     },
     {
       "id": "iban_validator",
@@ -37,6 +88,27 @@
       "name": "Microsoft 365 Mail (Graph)",
       "description": "Sendet Ergebnisse per Microsoft Graph an die eigene E-Mail-Adresse der angemeldeten Person — optional mit Dateianhängen aus der Agent-VM.",
       "version": "1.0.0"
+    },
+    {
+      "id": "niotix_sensors",
+      "name": "Niotix Sensor Data Fetch",
+      "description": "Abfragen über die Niotix X-API: (1) Messwerte via POST /xapi/v1/influxdb/query; (2) Sensorliste via GET /xapi/v1/virtual-devices; (3) gültige State Identifier eines Sensors (SHOW TAG VALUES, ohne Zeitfilter). Zeigt Tabellen & Citations in der WebUI.",
+      "version": "0.1.1",
+      "requirements": "aiohttp"
+    },
+    {
+      "id": "openstreetmap",
+      "name": "Open Street Map Agent",
+      "description": "Abfrage für Daten aus Open Street Map und Verarbeitung im Sprachmodell. Findet Koordinaten zu Orten, kann Distanzen zwischen Orten berechnen und herausfinden, Ob Adressen in Stadteilen liegen. Alle erarbeiteten Daten können in einer Karte dargestellt werden.",
+      "version": "0.3.1",
+      "requirements": "requests"
+    },
+    {
+      "id": "table_analysis",
+      "name": "Tabellenanalyse & Statistik",
+      "description": "Analysiert angehängte Excel-, CSV- und PDF-Dateien in Open WebUI, erstellt Profiling, Pivot-/Zeitraumanalysen und wendet statistische Methoden auf Tabellendaten an.",
+      "version": "0.1.0",
+      "requirements": "pandas,numpy,scipy,openpyxl,pdfplumber"
     },
     {
       "id": "tanss_read",

@@ -65,8 +65,19 @@ Portability rules — assistants must work on every installation, so a template
 knowledge bases, or references to tool servers / MCP connections. `tools` may
 only list tool ids from this hub; they are installed as dependencies.
 
+## Übernommene Werkzeuge
+
+Werkzeuge aus fremden Projekten dürfen nur mit ausdrücklicher Lizenz
+übernommen werden. Herkunft, Rechteinhaber und Lizenz stehen in
+[THIRD_PARTY.md](THIRD_PARTY.md) und zusätzlich im Kopf jeder betroffenen
+`tool.py`, damit die Angabe auch bei einer installierten Kopie erhalten
+bleibt.
+
 ## Workflow
 
 1. Add or edit items.
 2. `python3 scripts/generate_index.py` (validates and rewrites `index.json`).
-3. Commit everything, including `index.json`.
+3. `python3 scripts/check_tools.py` — lädt jede `tool.py` und baut ihre
+   Function-Specs, wie es die Installation zur Laufzeit tut. Braucht die in
+   den `requirements:` genannten Pakete.
+4. Commit everything, including `index.json`.
