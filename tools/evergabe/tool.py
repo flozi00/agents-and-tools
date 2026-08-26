@@ -2,7 +2,7 @@
 title: e-Vergabe Tenders
 description: Search, read, and download public procurement tenders from the federal evergabe-online.de marketplace (e-Vergabe). Login-free.
 author: primeLine Solutions GmbH
-version: 1.0.0
+version: 1.1.0
 requirements: requests
 """
 
