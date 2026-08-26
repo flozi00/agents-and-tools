@@ -1,16 +1,20 @@
 """
 title: e-Vergabe Tenders
-description: Search, read, and download public procurement tenders from the federal evergabe-online.de marketplace (e-Vergabe). Login-free.
+description: Search, read, and download public procurement tenders from the e-Vergabe marketplace (evergabe-online.de) — listing, tender announcements, and all attached tender documents. Login-free.
 author: primeLine Solutions GmbH
-version: 1.1.0
+version: 1.2.0
 requirements: requests
 """
 
 import html
+import io
 import os
 import re
+import time
 import xml.etree.ElementTree as ET
+import zipfile
 from typing import Any
+from urllib.parse import urljoin
 
 import requests
 from pydantic import BaseModel, Field
@@ -55,6 +59,19 @@ XML_FIELD_MAP = {
 def _clean(text: str) -> str:
     """Collapse whitespace and unescape HTML entities in a matched fragment."""
     return re.sub(r'\s+', ' ', html.unescape(text or '')).strip()
+
+
+def _listing_bytes(data: bytes) -> list[str]:
+    """Best-effort listing of a ZIP archive's member names.
+
+    Returns an empty list when the payload is not a well-formed archive, so a
+    caller can report an archive's presence without depending on its contents.
+    """
+    try:
+        with zipfile.ZipFile(io.BytesIO(data)) as archive:
+            return [entry.filename for entry in archive.infolist()]
+    except Exception:
+        return []
 
 
 def _strip_ns(tag: str) -> str:
@@ -244,9 +261,96 @@ class Tools:
     def _resolve_tender_url(self, tender_id: str) -> str:
         return f'{self.valves.base_url}/tenderdetails.html?id={tender_id}'
 
+    def _resolve_tender_documents_url(self, tender_id: str) -> str:
+        return f'{self.valves.base_url}/tenderdocuments.html?id={tender_id}'
+
+    def _new_session(self) -> requests.Session:
+        """A fresh gated HTTP session for one stateful (JSF) operation.
+
+        Distinct from ``_get_session`` on purpose: JSF view-state-scoped,
+        single-use commands (the tender ZIP archive command, per-file download
+        commands) bind only to the session that rendered the page carrying the
+        command's state token. Sharing the pooled session across such
+        operations would consume the state token of one download before the
+        next, so each stateful retrieval runs in its own session.
+        """
+        session = requests.Session()
+        session.headers['User-Agent'] = self.valves.user_agent
+        session.headers['Accept-Language'] = 'de-DE,de;q=0.9'
+        session.headers['Accept'] = 'text/html,application/xhtml+xml'
+        return session
+
+    def _emitted_links(self, html_text: str, tender_id: str) -> list[str]:
+        """Extract the tender's command links (ZIP + per-file) from its documents page.
+
+        Returns the distinct hrefs (HTML-unescaped) matching the tender id, in
+        document order. These are JSF view-state-scoped, single-use commands
+        that bind only to the session that rendered them, so they must be
+        triggered by that very session rather than by a copied link.
+        """
+        pat = r'href="([^"]*tenderdocuments\.html\?[^"]*id=' + re.escape(tender_id) + r'[^"]*)"'
+        out: list[str] = []
+        seen: set[str] = set()
+        for href in re.findall(pat, html_text):
+            candidate = html.unescape(href)
+            if candidate not in seen:
+                seen.add(candidate)
+                out.append(candidate)
+        return out
+
+    def _fetch_zip_bytes(self, tender_id: str, __event_emitter__=None) -> dict | None:
+        """Return the tender's ZIP archive bytes via its documents page's ZIP command.
+
+        The archive command is a JSF view-state-scoped, single-use command: it
+        only resolves inside the session that rendered the tender's
+        tenderdocuments page. This opens a fresh gated session, visits that
+        page in-session (which binds the command's state token), then
+        immediately triggers the ZIP command with the correct Referer. Returns
+        ``{'data': bytes, 'listing': [...]}`` on success, or ``None`` after
+        retries.
+        """
+        documents_url = self._resolve_tender_documents_url(tender_id)
+        zip_pat = r'href="([^"]*tenderdocuments\.html\?[^"]*zipDownloadButton[^"]*id=' + re.escape(tender_id) + r'[^"]*)"'
+        last_error: str | None = None
+        for attempt in range(1, 4):
+            self._emit(__event_emitter__, f'e-Vergabe requesting tender documents (attempt {attempt})', done=False)
+            session = self._new_session()
+            try:
+                session.get(f'{self.valves.base_url}/', timeout=30)
+                documents = session.get(documents_url, timeout=60)
+                if documents.status_code != 200:
+                    last_error = f'tender documents page HTTP {documents.status_code}'
+                    time.sleep(2)
+                    continue
+                match = re.search(zip_pat, documents.text)
+                if not match:
+                    last_error = 'no ZIP-download command found on the tender documents page'
+                    break
+                archive_url = urljoin(documents_url, html.unescape(match.group(1)))
+                archive = session.get(
+                    archive_url,
+                    timeout=180,
+                    allow_redirects=True,
+                    headers={
+                        'Referer': documents_url,
+                        'Accept': 'application/zip, application/octet-stream, multipart/*; q=0.9, */*; q=0.8',
+                    },
+                )
+                if archive.status_code == 200 and archive.content:
+                    return {
+                        'data': archive.content,
+                        'listing': _listing_bytes(archive.content),
+                    }
+                last_error = f'ZIP command HTTP {archive.status_code}'
+            except Exception as exc:
+                last_error = f'{exc.__class__.__name__}: {exc}'
+            time.sleep(2)
+        self._emit(__event_emitter__, f'e-Vergabe ZIP command unavailable: {last_error}')
+        return None
+
     # --- public tools (schema derived from these) -----------------------
 
-    async def search(
+    async def search_on_evergabe_online(
         self,
         query: str = '',
         limit: int = 10,
@@ -254,16 +358,19 @@ class Tools:
         __event_emitter__=None,
     ) -> dict[str, Any]:
         """
-        Search public procurement tenders on the e-Vergabe marketplace.
+        Search public procurement tenders on the evergabe-online.de e-Vergabe marketplace.
+
+        Queries the live evergabe-online.de search and returns matching tender
+        listings (Bezeichnung, Geschaeftszeichen, Vergabestelle, Ort,
+        Verfahrensart, Frist). Each result carries the tender id and a
+        tenderdetails.html link for follow-up calls.
 
         Args:
-            query: Optional keyword; results are filtered client-side.
+            query: Optional keyword to filter tenders on evergabe-online.de.
             limit: Maximum tenders to return (1 to max_results).
             page: Listing page to start from (1-based).
 
-        Keyword search is best-effort: the site's own keyword form is
-        stateful and often resets, so we list the public results and filter
-        them by the query locally. Empty query lists all tenders.
+        An empty query lists all currently-published tenders (newest first).
         """
         limit = max(1, min(limit, self.valves.max_results))
         page = max(1, page)
@@ -318,16 +425,22 @@ class Tools:
         self._emit(__event_emitter__, f'e-Vergabe: {len(collected)} matching tenders')
         return result
 
-    async def read_tender(
+    async def read_tender_on_evergabe_online(
         self,
         tender_id: str,
         __event_emitter__=None,
     ) -> dict[str, Any]:
         """
-        Read a single tender's structured details from its announcement XML.
+        Read a single tender's structured announcement from evergabe-online.de.
+
+        Fetches the structured Bekanntmachung.xml announcement for the given
+        tender id from evergabe-online.de and returns its fields (Titel,
+        Geschaeftszeichen, Vergabestelle, Erfuellungsort, Angebotsfrist,
+        Verfahrensart, etc.). Falls back to the HTML detail page if the XML
+        is unavailable.
 
         Args:
-            tender_id: The tender id (the digits in a tenderdetails.html link).
+            tender_id: The tender id from a tenderdetails.html link on evergabe-online.de.
         """
         if not tender_id or not str(tender_id).strip():
             return {'error': 'tender_id is required.'}
@@ -352,7 +465,7 @@ class Tools:
         self._emit(__event_emitter__, f'e-Vergabe read tender {tender_id}')
         return result
 
-    async def download(
+    async def download_announcement_from_evergabe_online(
         self,
         tender_id: str,
         kind: str = 'xml',
@@ -361,10 +474,16 @@ class Tools:
         __event_emitter__=None,
     ) -> dict[str, Any]:
         """
-        Download a tender's announcement file (XML or PDF) and save it.
+        Download a tender's official announcement (Bekanntmachung) as XML or PDF from evergabe-online.de.
+
+        Fetches the structured Bekanntmachung.xml or Bekanntmachung.pdf
+        announcement file for the given tender id from evergabe-online.de and
+        saves it locally. This is the formal published announcement only —
+        for the attached tender documents (Vergabeunterlagen: PDFs, Word
+        files, etc.) use download_documents_from_evergabe_online instead.
 
         Args:
-            tender_id: The tender id (the digits in a tenderdetails.html link).
+            tender_id: The tender id from a tenderdetails.html link on evergabe-online.de.
             kind: 'xml' or 'pdf'. Defaults to 'xml'.
 
         The file is saved into the configured downloads_dir (or a ./tenders
@@ -400,4 +519,79 @@ class Tools:
             'path': full_path,
             'size_bytes': len(data),
             'source': path,
+        }
+
+    async def download_documents_from_evergabe_online(
+        self,
+        tender_id: str,
+        __request__=None,
+        __user__=None,
+        __event_emitter__=None,
+    ) -> dict[str, Any]:
+        """
+        Download ALL attached tender documents (Vergabeunterlagen) of an evergabe-online.de tender as a single ZIP archive.
+
+        evergabe-online.de publishes each tender's attached documents (PDF,
+        Word, Excel, drawings, etc.) on a separate tenderdocuments.html page
+        behind JSF view-state-scoped, single-use download commands. This
+        method opens a fresh session, visits the tender's documents page,
+        and triggers the site's built-in "download all as ZIP" command
+        (zipDownloadButton), so every attached file is retrieved in one call
+        rather than one command per file.
+
+        The resulting ZIP is validated (PK header + member listing) and
+        saved into the configured downloads_dir (or a ./tenders folder next
+        to the agent). Returns the saved path, size, and the list of file
+        names contained in the archive. If the tender has no attachments or
+        the ZIP command is unavailable, returns an error explaining why.
+
+        Args:
+            tender_id: The tender id from a tenderdetails.html link on evergabe-online.de.
+        """
+        tender_id = str(tender_id).strip()
+        if not tender_id:
+            return {'error': 'tender_id is required.'}
+
+        self._emit(__event_emitter__, f'e-Vergabe downloading all documents of tender {tender_id}', done=False)
+
+        result = self._fetch_zip_bytes(tender_id, __event_emitter__)
+        if result is None:
+            return {
+                'error': (
+                    'No ZIP archive could be downloaded for this tender. The '
+                    'tender may have no attached documents, or the evergabe-online.de '
+                    'ZIP command was temporarily unavailable. Use '
+                    'read_tender_on_evergabe_online to inspect the tender, then retry.'
+                ),
+            }
+
+        data: bytes = result['data']
+        listing: list[str] = result['listing']
+        if not listing:
+            self._emit(__event_emitter__, f'e-Vergabe tender {tender_id}: archive was empty or not a valid ZIP')
+            return {
+                'error': (
+                    'A file was returned but it is not a valid ZIP archive. '
+                    'The tender may have no attached documents.'
+                ),
+            }
+
+        target_dir = self.valves.downloads_dir.strip() or os.path.join(os.getcwd(), 'tenders')
+        os.makedirs(target_dir, exist_ok=True)
+        filename = f'tender-{tender_id}-documents.zip'
+        full_path = os.path.join(target_dir, filename)
+        with open(full_path, 'wb') as handle:
+            handle.write(data)
+
+        self._emit(
+            __event_emitter__,
+            f'e-Vergabe saved {filename} ({len(listing)} files)',
+        )
+        return {
+            'status': 'completed',
+            'filename': filename,
+            'path': full_path,
+            'size_bytes': len(data),
+            'file_count': len(listing),
+            'files': listing,
         }

@@ -133,8 +133,8 @@
     {
       "id": "evergabe",
       "name": "e-Vergabe Tenders",
-      "description": "Search, read, and download public procurement tenders from the federal evergabe-online.de marketplace (e-Vergabe). Login-free.",
-      "version": "1.1.0",
+      "description": "Search, read, and download public procurement tenders from the e-Vergabe marketplace (evergabe-online.de) — listing, tender announcements, and all attached tender documents. Login-free.",
+      "version": "1.2.0",
       "requirements": "requests"
     },
     {
