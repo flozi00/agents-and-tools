@@ -20,6 +20,24 @@ DEFAULT_USER_AGENT = (
     '(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
 )
 
+# The e-Vergabe site is a stateful JSF/PrimeFaces application. Its public
+# listing/search is a POST to the search panel's action URL; the keyword is
+# carried in the `searchString` field and the submit button triggers it. A plain
+# GET on /search.html?N always returns the first page (the ?N is a JSF view id,
+# not a page number), so it can never reach older tenders. These constants
+# identify the working search form and the JSF pagination command.
+JSF_SEARCH_ACTION = '/search.html?1-1.-searchPanel-searchForm'
+JSF_KEYWORD_FIELD = 'simpleSearchParametersPanel:keywordStringGroup:searchString'
+JSF_SUBMIT_FIELD = 'submitButton'
+JSF_SUBMIT_VALUE = 'suchen'
+JSF_PAGELINK = r'href="(\./search\.html\?[^"]*pageLink)"[^>]*title="Gehe zu Seite %d"'
+
+# Upper bound on listing pages scanned in a single search() call. The site
+# shows 10 results per page and the public index holds ~1000 tenders, so this
+# caps worst-case work (e.g. a broad keyword whose matches are filtered out) at
+# a few hundred rows while never blocking an explicitly requested deep page.
+MAX_SEARCH_PAGES = 30
+
 # The structured tender announcement XML exposes these all-ASCII element tags.
 XML_FIELD_MAP = {
     'THEMA': 'title',
@@ -157,6 +175,48 @@ class Tools:
         response.raise_for_status()
         return response.text
 
+    def _post_text(self, path: str, data: dict, *, headers: dict | None = None) -> str:
+        """POST to a JSF action and return the response body (follows redirects)."""
+        request_headers = {'Origin': self.valves.base_url, 'Referer': f'{self.valves.base_url}/search.html'}
+        if headers:
+            request_headers.update(headers)
+        response = self._get_session().post(
+            f'{self.valves.base_url}{path}', data=data, headers=request_headers, timeout=45
+        )
+        response.raise_for_status()
+        return response.text
+
+    def _search_first_page(self, query: str) -> str:
+        """Return the HTML of the first listing page for `query`.
+
+        An empty query lists all tenders (newest first) via a plain GET. A
+        non-empty query runs the site's real keyword search, which is a JSF
+        POST to the search panel's action URL. The view id in that URL and a
+        prior GET of /search.html (to initialise the panel in the session) are
+        both required; without them the keyword is silently ignored.
+        """
+        if not query:
+            return self._fetch_text('/search.html')
+        self._fetch_text('/search.html')  # warm the JSF search panel state
+        return self._post_text(
+            JSF_SEARCH_ACTION,
+            {JSF_KEYWORD_FIELD: query, JSF_SUBMIT_FIELD: JSF_SUBMIT_VALUE},
+        )
+
+    def _next_page(self, html_text: str, from_page: int) -> str | None:
+        """Follow the JSF 'next page' link to page `from_page + 1`.
+
+        Returns the next page's HTML, or None when the current page is the
+        last one. Each pageLink encodes its exact target page, so the link for
+        K+1 must be read fresh out of page K's HTML.
+        """
+        match = re.search(JSF_PAGELINK % (from_page + 1), html_text)
+        if not match:
+            return None
+        link = match.group(1)
+        path = link[2:] if link.startswith('./') else link  # drop the leading ./
+        return self._post_text(path, {'javax.faces.partial.ajax': 'true'})
+
     def _fetch_bytes(self, path: str) -> bytes:
         response = self._get_session().get(f'{self.valves.base_url}{path}', timeout=45)
         response.raise_for_status()
@@ -206,21 +266,56 @@ class Tools:
         them by the query locally. Empty query lists all tenders.
         """
         limit = max(1, min(limit, self.valves.max_results))
+        page = max(1, page)
         self._emit(__event_emitter__, f'e-Vergabe search: {query or "all tenders"}', done=False)
-        rows = _parse_listing(self._fetch_text(f'/search.html?{page}'))
-        if query:
-            needle = query.lower()
-            rows = [
-                r for r in rows
-                if needle in r['title'].lower() or needle in r['geschaeftszeichen'].lower()
-            ]
+
+        # The site is a stateful JSF app: a GET on /search.html?N always returns
+        # the same first page (N is a view id, not a page number). The real
+        # keyword search is a POST (see _search_first_page) and paging forward
+        # is done by POSTing the JSF pageLink. Keep the client-side filter as a
+        # safety net, but the candidate set now comes from the server search.
+        needle = query.lower() if query else None
+        collected: list[dict] = []
+        current_page = 1
+        html = self._search_first_page(query)
+
+        # Advance to the requested starting page.
+        while current_page < page:
+            nxt = self._next_page(html, current_page)
+            if nxt is None:
+                break
+            current_page += 1
+            html = nxt
+
+        # Collect across pages until we have enough (or run out of pages). The
+        # page cap bounds worst-case work when a broad keyword's matches are
+        # filtered out client-side across many pages.
+        scanned = 0
+        page_cap = max(MAX_SEARCH_PAGES, page + limit // 5)
+        while len(collected) < limit and scanned < page_cap:
+            rows = _parse_listing(html)
+            if needle:
+                rows = [
+                    r for r in rows
+                    if needle in r['title'].lower() or needle in r['geschaeftszeichen'].lower()
+                ]
+            collected.extend(rows)
+            if len(collected) >= limit:
+                break
+            nxt = self._next_page(html, current_page)
+            if nxt is None:
+                break
+            current_page += 1
+            scanned += 1
+            html = nxt
+
         result = {
             'query': query,
             'page': page,
-            'matches': len(rows),
-            'tenders': rows[:limit],
+            'matches': len(collected),
+            'tenders': collected[:limit],
         }
-        self._emit(__event_emitter__, f'e-Vergabe: {len(rows)} matching tenders')
+        self._emit(__event_emitter__, f'e-Vergabe: {len(collected)} matching tenders')
         return result
 
     async def read_tender(
