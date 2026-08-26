@@ -131,6 +131,13 @@
       "requirements": "httpx,pydantic,pypdf,python-docx,python-pptx"
     },
     {
+      "id": "evergabe",
+      "name": "e-Vergabe Tenders",
+      "description": "Search, read, and download public procurement tenders from the federal evergabe-online.de marketplace (e-Vergabe). Login-free.",
+      "version": "1.0.0",
+      "requirements": "requests"
+    },
+    {
       "id": "gesetze_im_internet",
       "name": "Gesetze im Internet",
       "description": "Findet und liest Bundesrecht über gesetze-im-internet.de — Gesetze nach Titel oder Kürzel suchen, Volltext einzelner Normen abrufen und die öffentliche Volltextsuche nutzen.",
