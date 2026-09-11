@@ -1,227 +1,203 @@
 {
-  "version": 1,
-  "assistants": [
-    {
-      "id": "dokumenten-assistent-d3",
-      "name": "Dokumenten-Assistent (d.3)",
-      "description": "Recherchiert im Dokumentenmanagement d.velop d.3 — findet Dokumente per Volltextsuche, öffnet Akten über das Aktenzeichen und fasst PDF-, Word- und PowerPoint-Inhalte zusammen.",
-      "version": "1.0.0",
-      "tools": [
-        "d3_documents"
-      ]
-    },
-    {
-      "id": "email-profi",
-      "name": "E-Mail-Profi",
-      "description": "Formuliert und überarbeitet professionelle E-Mails auf Deutsch — von Stichpunkten zur versandfertigen Nachricht.",
-      "version": "1.0.0",
-      "tools": []
-    },
-    {
-      "id": "finanz-assistent",
-      "name": "Finanz-Assistent",
-      "description": "Hilft bei kaufmännischen Rechnungen und prüft Zahlungsdaten — rechnet exakt mit Werkzeugen statt zu schätzen.",
-      "version": "1.0.0",
-      "tools": [
-        "calculator",
-        "iban_validator"
-      ]
-    },
-    {
-      "id": "geodaten-assistent",
-      "name": "Geodaten-Assistent",
-      "description": "Beantwortet Ortsfragen mit OpenStreetMap — findet Koordinaten zu Adressen, berechnet Entfernungen, prüft die Lage in Stadtteilen oder Gemeindegrenzen und zeichnet das Ergebnis in eine Karte.",
-      "version": "1.0.0",
-      "tools": [
-        "openstreetmap"
-      ]
-    },
-    {
-      "id": "gitlab-entwickler",
-      "name": "GitLab-Entwickler",
-      "description": "Arbeitet direkt in GitLab-Repositories — liest Code, legt Arbeitsbranches an, committet Änderungen, öffnet Merge Requests und untersucht fehlgeschlagene CI-Pipelines.",
-      "version": "1.0.0",
-      "tools": [
-        "gitlab_repo",
-        "gitlab_ci"
-      ]
-    },
-    {
-      "id": "it-sicherheit-vergabe",
-      "name": "IT-Sicherheit & Vergabe",
-      "description": "Gleicht Sicherheitsanforderungen aus Ausschreibungen und Konzepten gegen die BSI-Stand-der-Technik-Bibliothek ab und liefert zitierfähige Controls samt Referenz.",
-      "version": "1.0.0",
-      "tools": [
-        "bsi_stand_der_technik"
-      ]
-    },
-    {
-      "id": "ratsinfo-assistent",
-      "name": "Ratsinfo-Assistent",
-      "description": "Durchsucht das Ratsinformationssystem (ALLRIS) nach Vorlagen, fasst sie samt Beschlussvorschlag und Beschlusstexten zusammen und listet die Anlagen auf.",
-      "version": "1.0.0",
-      "tools": [
-        "allris_vorlagen"
-      ]
-    },
-    {
-      "id": "rechtsassistent-nrw",
-      "name": "Rechtsassistent NRW",
-      "description": "Recherchiert in NRW-Landesrecht, Bundesrecht und Rechtsprechung — findet einschlägige Normen, zitiert Paragraphen im Wortlaut und nennt zu jeder Aussage die Fundstelle.",
-      "version": "1.0.0",
-      "tools": [
-        "recht_nrw",
-        "gesetze_im_internet",
-        "openlegaldata"
-      ]
-    },
-    {
-      "id": "sensordaten-assistent",
-      "name": "Sensordaten-Assistent",
-      "description": "Fragt Messwerte aus einer Niotix-Plattform ab (Smart-City-Sensorik) und stellt Zeitreihen als Tabelle mit Quellenangabe dar.",
-      "version": "1.0.0",
-      "tools": [
-        "niotix_sensors"
-      ]
-    },
-    {
-      "id": "tabellen-analyst",
-      "name": "Tabellen-Analyst",
-      "description": "Wertet angehängte Excel-, CSV- und PDF-Tabellen aus — Spaltenprofil, Pivot-Auswertungen, Zeitreihen und statistische Tests, gerechnet statt geschätzt.",
-      "version": "1.0.0",
-      "tools": [
-        "table_analysis"
-      ]
-    },
-    {
-      "id": "wiki-assistent",
-      "name": "Wiki-Assistent",
-      "description": "Beantwortet Fragen aus einem MediaWiki — durchsucht den Volltext, folgt internen Verlinkungen, liest PDF-Anhänge aus und zitiert jede Aussage mit Seitenangabe.",
-      "version": "1.0.0",
-      "tools": [
-        "mediawiki"
-      ]
-    }
-  ],
-  "tools": [
-    {
-      "id": "allris_vorlagen",
-      "name": "ALLRIS Vorlagen Tools",
-      "description": "Sucht Vorlagen im Ratsinformationssystem ALLRIS, gibt Beschlussvorschlag, Beratungsfolge und Beschlusstexte im Volltext aus und listet die Anlagen samt PDF-Text auf.",
-      "version": "0.2.0",
-      "requirements": "httpx, beautifulsoup4, pydantic, pypdf"
-    },
-    {
-      "id": "bsi_stand_der_technik",
-      "name": "BSI Stand-der-Technik Adapter",
-      "description": "Findet passende Anforderungen (Controls) aus der maschinenlesbaren BSI Stand-der-Technik-Bibliothek (OSCAL, GitHub) und liefert zitierfaehige Referenzen. Immer aktuell via ETag/Conditional-GET, ohne lokalen Voll-Spiegel.",
-      "version": "1.0"
-    },
-    {
-      "id": "calculator",
-      "name": "Rechner",
-      "description": "Exakter Taschenrechner für Grundrechenarten, Potenzen, Prozente und Rundung — ohne Schätzfehler des Sprachmodells.",
-      "version": "1.0.0"
-    },
-    {
-      "id": "d3_documents",
-      "name": "d.velop d.3 Document Tools",
-      "description": "Durchsucht das Dokumentenmanagement d.velop d.3, liest Dokumente samt Metadaten und extrahiert Text aus PDF-, Word- und PowerPoint-Anhängen.",
-      "version": "0.1.0",
-      "requirements": "httpx,pydantic,pypdf,python-docx,python-pptx"
-    },
-    {
-      "id": "evergabe",
-      "name": "e-Vergabe Tenders",
-      "description": "Search, read, and download public procurement tenders from the e-Vergabe marketplace (evergabe-online.de) — listing, tender announcements, and all attached tender documents. Login-free.",
-      "version": "1.2.0",
-      "requirements": "requests"
-    },
-    {
-      "id": "gesetze_im_internet",
-      "name": "Gesetze im Internet",
-      "description": "Findet und liest Bundesrecht über gesetze-im-internet.de — Gesetze nach Titel oder Kürzel suchen, Volltext einzelner Normen abrufen und die öffentliche Volltextsuche nutzen.",
-      "version": "0.1.0"
-    },
-    {
-      "id": "gitlab_ci",
-      "name": "GitLab CI Pipeline Results Tool",
-      "description": "Liest GitLab-CI/CD-Ergebnisse: Pipelines, Jobs, Testberichte und Job-Logs — rein lesend, für die Fehlersuche an fehlgeschlagenen Pipelines.",
-      "version": "0.1.0",
-      "requirements": "requests"
-    },
-    {
-      "id": "gitlab_repo",
-      "name": "GitLab Repository Coding Tool",
-      "description": "Liest und schreibt GitLab-Repositories über die REST-API — Dateien lesen, Branches und Forks anlegen, Änderungen committen, Merge Requests und Issues verwalten.",
-      "version": "0.3.4",
-      "requirements": "requests"
-    },
-    {
-      "id": "iban_validator",
-      "name": "IBAN-Prüfung",
-      "description": "Prüft IBANs auf formale Gültigkeit (Prüfziffer nach ISO 13616) und formatiert sie zur besseren Lesbarkeit.",
-      "version": "1.0.0"
-    },
-    {
-      "id": "mediawiki",
-      "name": "MediaWiki Suche",
-      "description": "Sucht im MediaWiki-Volltext, lädt Inhalte, lädt diese als Dateien hoch, gibt die Quellen an, liefert je Seite die internen Verlinkungen und extrahiert Datei-Anhänge (z. B. PDF) als Text.",
-      "version": "0.4",
-      "requirements": "requests, pypdf"
-    },
-    {
-      "id": "ms365_graph_mail_send",
-      "name": "Microsoft 365 Mail (Graph)",
-      "description": "Sendet Ergebnisse per Microsoft Graph an die eigene E-Mail-Adresse der angemeldeten Person — optional mit Dateianhängen aus der Agent-VM.",
-      "version": "1.0.0"
-    },
-    {
-      "id": "niotix_sensors",
-      "name": "Niotix Sensor Data Fetch",
-      "description": "Abfragen über die Niotix X-API: (1) Messwerte via POST /xapi/v1/influxdb/query; (2) Sensorliste via GET /xapi/v1/virtual-devices; (3) gültige State Identifier eines Sensors (SHOW TAG VALUES, ohne Zeitfilter). Zeigt Tabellen & Citations in der WebUI.",
-      "version": "0.1.1",
-      "requirements": "aiohttp"
-    },
-    {
-      "id": "openlegaldata",
-      "name": "OpenLegalData Adapter",
-      "description": "Durchsucht Rechtsprechung und Gesetze ueber die offene OpenLegalData.io-API (Gerichtsentscheidungen im Volltext, Aktenzeichen-Lookup, Gesetzbuecher/Paragraphen) und liefert die Inhalte samt Quellen an das Sprachmodell.",
-      "version": "1.0"
-    },
-    {
-      "id": "openstreetmap",
-      "name": "Open Street Map Agent",
-      "description": "Abfrage für Daten aus Open Street Map und Verarbeitung im Sprachmodell. Findet Koordinaten zu Orten, kann Distanzen zwischen Orten berechnen und herausfinden, Ob Adressen in Stadteilen liegen. Alle erarbeiteten Daten können in einer Karte dargestellt werden.",
-      "version": "0.3.1",
-      "requirements": "requests"
-    },
-    {
-      "id": "recht_nrw",
-      "name": "Recht NRW Adapter",
-      "description": "Durchsucht das geltende und historische NRW-Landesrecht (Gesetze, Rechtsverordnungen, Verwaltungsvorschriften) ueber recht.nrw.de und ruft Normen als Inhaltsverzeichnis, einzelne Paragraphen oder Volltext ab.",
-      "version": "1.0"
-    },
-    {
-      "id": "table_analysis",
-      "name": "Tabellenanalyse & Statistik",
-      "description": "Analysiert angehängte Excel-, CSV- und PDF-Dateien in Open WebUI, erstellt Profiling, Pivot-/Zeitraumanalysen und wendet statistische Methoden auf Tabellendaten an.",
-      "version": "0.1.0",
-      "requirements": "pandas,numpy,scipy,openpyxl,pdfplumber"
-    },
-    {
-      "id": "tanss_read",
-      "name": "TANSS Read-Only API",
-      "description": "Read-only OpenWebUI tool for TANSS — tickets, companies, employees, supports, search, plus a generic GET/query passthrough covering the whole readable TANSS API.",
-      "version": "0.2.0",
-      "requirements": "requests"
-    },
-    {
-      "id": "tanss_write",
-      "name": "TANSS Write API",
-      "description": "Write tool for TANSS — create and update tickets, add comments, book time tracking entries (supports), and send ticket mails.",
-      "version": "0.1.0",
-      "requirements": "requests"
-    }
-  ]
+	"version": 1,
+	"assistants": [
+		{
+			"id": "dokumenten-assistent-d3",
+			"name": "Dokumenten-Assistent (d.3)",
+			"description": "Recherchiert im Dokumentenmanagement d.velop d.3 — findet Dokumente per Volltextsuche, öffnet Akten über das Aktenzeichen und fasst PDF-, Word- und PowerPoint-Inhalte zusammen.",
+			"version": "1.0.0",
+			"tools": ["d3_documents"]
+		},
+		{
+			"id": "email-profi",
+			"name": "E-Mail-Profi",
+			"description": "Formuliert und überarbeitet professionelle E-Mails auf Deutsch — von Stichpunkten zur versandfertigen Nachricht.",
+			"version": "1.0.0",
+			"tools": []
+		},
+		{
+			"id": "finanz-assistent",
+			"name": "Finanz-Assistent",
+			"description": "Hilft bei kaufmännischen Rechnungen und prüft Zahlungsdaten — rechnet exakt mit Werkzeugen statt zu schätzen.",
+			"version": "1.0.0",
+			"tools": ["calculator", "iban_validator"]
+		},
+		{
+			"id": "geodaten-assistent",
+			"name": "Geodaten-Assistent",
+			"description": "Beantwortet Ortsfragen mit OpenStreetMap — findet Koordinaten zu Adressen, berechnet Entfernungen, prüft die Lage in Stadtteilen oder Gemeindegrenzen und zeichnet das Ergebnis in eine Karte.",
+			"version": "1.0.0",
+			"tools": ["openstreetmap"]
+		},
+		{
+			"id": "gitlab-entwickler",
+			"name": "GitLab-Entwickler",
+			"description": "Arbeitet direkt in GitLab-Repositories — liest Code, legt Arbeitsbranches an, committet Änderungen, öffnet Merge Requests und untersucht fehlgeschlagene CI-Pipelines.",
+			"version": "1.0.0",
+			"tools": ["gitlab_repo", "gitlab_ci"]
+		},
+		{
+			"id": "it-sicherheit-vergabe",
+			"name": "IT-Sicherheit & Vergabe",
+			"description": "Gleicht Sicherheitsanforderungen aus Ausschreibungen und Konzepten gegen die BSI-Stand-der-Technik-Bibliothek ab und liefert zitierfähige Controls samt Referenz.",
+			"version": "1.0.0",
+			"tools": ["bsi_stand_der_technik"]
+		},
+		{
+			"id": "ratsinfo-assistent",
+			"name": "Ratsinfo-Assistent",
+			"description": "Durchsucht das Ratsinformationssystem (ALLRIS) nach Vorlagen, fasst sie samt Beschlussvorschlag und Beschlusstexten zusammen und listet die Anlagen auf.",
+			"version": "1.0.0",
+			"tools": ["allris_vorlagen"]
+		},
+		{
+			"id": "rechtsassistent-nrw",
+			"name": "Rechtsassistent NRW",
+			"description": "Recherchiert in NRW-Landesrecht, Bundesrecht und Rechtsprechung — findet einschlägige Normen, zitiert Paragraphen im Wortlaut und nennt zu jeder Aussage die Fundstelle.",
+			"version": "1.0.0",
+			"tools": ["recht_nrw", "gesetze_im_internet", "openlegaldata"]
+		},
+		{
+			"id": "sensordaten-assistent",
+			"name": "Sensordaten-Assistent",
+			"description": "Fragt Messwerte aus einer Niotix-Plattform ab (Smart-City-Sensorik) und stellt Zeitreihen als Tabelle mit Quellenangabe dar.",
+			"version": "1.0.0",
+			"tools": ["niotix_sensors"]
+		},
+		{
+			"id": "tabellen-analyst",
+			"name": "Tabellen-Analyst",
+			"description": "Wertet angehängte Excel-, CSV- und PDF-Tabellen aus — Spaltenprofil, Pivot-Auswertungen, Zeitreihen und statistische Tests, gerechnet statt geschätzt.",
+			"version": "1.0.0",
+			"tools": ["table_analysis"]
+		},
+		{
+			"id": "wiki-assistent",
+			"name": "Wiki-Assistent",
+			"description": "Beantwortet Fragen aus einem MediaWiki — durchsucht den Volltext, folgt internen Verlinkungen, liest PDF-Anhänge aus und zitiert jede Aussage mit Seitenangabe.",
+			"version": "1.0.0",
+			"tools": ["mediawiki"]
+		}
+	],
+	"tools": [
+		{
+			"id": "allris_vorlagen",
+			"name": "ALLRIS Vorlagen Tools",
+			"description": "Sucht Vorlagen im Ratsinformationssystem ALLRIS, gibt Beschlussvorschlag, Beratungsfolge und Beschlusstexte im Volltext aus und listet die Anlagen samt PDF-Text auf.",
+			"version": "0.2.0",
+			"requirements": "httpx, beautifulsoup4, pydantic, pypdf"
+		},
+		{
+			"id": "bsi_stand_der_technik",
+			"name": "BSI Stand-der-Technik Adapter",
+			"description": "Findet passende Anforderungen (Controls) aus der maschinenlesbaren BSI Stand-der-Technik-Bibliothek (OSCAL, GitHub) und liefert zitierfaehige Referenzen. Immer aktuell via ETag/Conditional-GET, ohne lokalen Voll-Spiegel.",
+			"version": "1.0"
+		},
+		{
+			"id": "calculator",
+			"name": "Rechner",
+			"description": "Exakter Taschenrechner für Grundrechenarten, Potenzen, Prozente und Rundung — ohne Schätzfehler des Sprachmodells.",
+			"version": "1.0.0"
+		},
+		{
+			"id": "d3_documents",
+			"name": "d.velop d.3 Document Tools",
+			"description": "Durchsucht das Dokumentenmanagement d.velop d.3, liest Dokumente samt Metadaten und extrahiert Text aus PDF-, Word- und PowerPoint-Anhängen.",
+			"version": "0.1.0",
+			"requirements": "httpx,pydantic,pypdf,python-docx,python-pptx"
+		},
+		{
+			"id": "evergabe",
+			"name": "e-Vergabe Tenders",
+			"description": "Search, read, and download public procurement tenders from the e-Vergabe marketplace (evergabe-online.de) — listing, tender announcements, and all attached tender documents. Login-free.",
+			"version": "1.2.0",
+			"requirements": "requests"
+		},
+		{
+			"id": "gesetze_im_internet",
+			"name": "Gesetze im Internet",
+			"description": "Findet und liest Bundesrecht über gesetze-im-internet.de — Gesetze nach Titel oder Kürzel suchen, Volltext einzelner Normen abrufen und die öffentliche Volltextsuche nutzen.",
+			"version": "0.1.0"
+		},
+		{
+			"id": "gitlab_ci",
+			"name": "GitLab CI Pipeline Results Tool",
+			"description": "Liest GitLab-CI/CD-Ergebnisse: Pipelines, Jobs, Testberichte und Job-Logs — rein lesend, für die Fehlersuche an fehlgeschlagenen Pipelines.",
+			"version": "0.1.0",
+			"requirements": "requests"
+		},
+		{
+			"id": "gitlab_repo",
+			"name": "GitLab Repository Coding Tool",
+			"description": "Liest und schreibt GitLab-Repositories über die REST-API — Dateien lesen, Branches und Forks anlegen, Änderungen committen, Merge Requests und Issues verwalten.",
+			"version": "0.3.4",
+			"requirements": "requests"
+		},
+		{
+			"id": "iban_validator",
+			"name": "IBAN-Prüfung",
+			"description": "Prüft IBANs auf formale Gültigkeit (Prüfziffer nach ISO 13616) und formatiert sie zur besseren Lesbarkeit.",
+			"version": "1.0.0"
+		},
+		{
+			"id": "mediawiki",
+			"name": "MediaWiki Suche",
+			"description": "Sucht im MediaWiki-Volltext, lädt Inhalte, lädt diese als Dateien hoch, gibt die Quellen an, liefert je Seite die internen Verlinkungen und extrahiert Datei-Anhänge (z. B. PDF) als Text.",
+			"version": "0.4",
+			"requirements": "requests, pypdf"
+		},
+		{
+			"id": "ms365_graph_mail_send",
+			"name": "Microsoft 365 Mail (Graph)",
+			"description": "Sendet Ergebnisse per Microsoft Graph an die eigene E-Mail-Adresse der angemeldeten Person — optional mit Dateianhängen aus der Agent-VM.",
+			"version": "1.0.0"
+		},
+		{
+			"id": "niotix_sensors",
+			"name": "Niotix Sensor Data Fetch",
+			"description": "Abfragen über die Niotix X-API: (1) Messwerte via POST /xapi/v1/influxdb/query; (2) Sensorliste via GET /xapi/v1/virtual-devices; (3) gültige State Identifier eines Sensors (SHOW TAG VALUES, ohne Zeitfilter). Zeigt Tabellen & Citations in der WebUI.",
+			"version": "0.1.1",
+			"requirements": "aiohttp"
+		},
+		{
+			"id": "openlegaldata",
+			"name": "OpenLegalData Adapter",
+			"description": "Durchsucht Rechtsprechung und Gesetze ueber die offene OpenLegalData.io-API (Gerichtsentscheidungen im Volltext, Aktenzeichen-Lookup, Gesetzbuecher/Paragraphen) und liefert die Inhalte samt Quellen an das Sprachmodell.",
+			"version": "1.0"
+		},
+		{
+			"id": "openstreetmap",
+			"name": "Open Street Map Agent",
+			"description": "Abfrage für Daten aus Open Street Map und Verarbeitung im Sprachmodell. Findet Koordinaten zu Orten, kann Distanzen zwischen Orten berechnen und herausfinden, Ob Adressen in Stadteilen liegen. Alle erarbeiteten Daten können in einer Karte dargestellt werden.",
+			"version": "0.3.1",
+			"requirements": "requests"
+		},
+		{
+			"id": "recht_nrw",
+			"name": "Recht NRW Adapter",
+			"description": "Durchsucht das geltende und historische NRW-Landesrecht (Gesetze, Rechtsverordnungen, Verwaltungsvorschriften) ueber recht.nrw.de und ruft Normen als Inhaltsverzeichnis, einzelne Paragraphen oder Volltext ab.",
+			"version": "1.0"
+		},
+		{
+			"id": "table_analysis",
+			"name": "Tabellenanalyse & Statistik",
+			"description": "Analysiert angehängte Excel-, CSV- und PDF-Dateien in Open WebUI, erstellt Profiling, Pivot-/Zeitraumanalysen und wendet statistische Methoden auf Tabellendaten an.",
+			"version": "0.1.0",
+			"requirements": "pandas,numpy,scipy,openpyxl,pdfplumber"
+		},
+		{
+			"id": "tanss_read",
+			"name": "TANSS Read-Only API",
+			"description": "Read-only OpenWebUI tool for TANSS — tickets, companies, employees, supports, search, plus a generic GET/query passthrough covering the whole readable TANSS API.",
+			"version": "0.2.0",
+			"requirements": "requests"
+		},
+		{
+			"id": "tanss_write",
+			"name": "TANSS Write API",
+			"description": "Write tool for TANSS — create and update tickets, add comments, book time tracking entries (supports), and send ticket mails.",
+			"version": "0.1.0",
+			"requirements": "requests"
+		}
+	]
 }

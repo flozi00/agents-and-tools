@@ -12,19 +12,19 @@ So bleibt die Angabe auch in einer installierten Kopie erhalten.
 
 ## KommI – Kommunale Intelligenz (openCode)
 
-Adapter-Katalog der Initiative *KommI – Kommunale Intelligenz*, veröffentlicht
+Adapter-Katalog der Initiative _KommI – Kommunale Intelligenz_, veröffentlicht
 auf openCode, der Open-Source-Plattform der öffentlichen Verwaltung:
 <https://gitlab.opencode.de/kommi/adapter>
 
 ### Mit Lizenzangabe
 
-| Werkzeug (Hub-ID) | Quelldatei | Quellprojekt | Rechteinhaber | Lizenz |
-| --- | --- | --- | --- | --- |
-| `gitlab_repo` | `gitlab_adapter.py` | [gitlab-adapter](https://gitlab.opencode.de/kommi/adapter/gitlab-adapter) | Boris van Benthem | MIT No Attribution (MIT-0) |
-| `gitlab_ci` | `gitlab_ci_pipeline_adapter.py` | [gitlab-adapter](https://gitlab.opencode.de/kommi/adapter/gitlab-adapter) | Boris van Benthem | MIT No Attribution (MIT-0) |
-| `table_analysis` | `table_analysis.py` | [tabellen-analyse](https://gitlab.opencode.de/kommi/adapter/tabellen-analyse) | Boris van Benthem | MIT No Attribution (MIT-0) |
-| `openstreetmap` | `osm-adapter.py` | [osm-adapter](https://gitlab.opencode.de/kommi/adapter/osm-adapter) | Boris van Benthem (Stadt Oberhausen) | MIT |
-| `niotix_sensors` | `niotix-adapter.py` | [niotix-adapter](https://gitlab.opencode.de/kommi/adapter/niotix-adapter) | Boris van Benthem | MIT |
+| Werkzeug (Hub-ID) | Quelldatei                      | Quellprojekt                                                                  | Rechteinhaber                        | Lizenz                     |
+| ----------------- | ------------------------------- | ----------------------------------------------------------------------------- | ------------------------------------ | -------------------------- |
+| `gitlab_repo`     | `gitlab_adapter.py`             | [gitlab-adapter](https://gitlab.opencode.de/kommi/adapter/gitlab-adapter)     | Boris van Benthem                    | MIT No Attribution (MIT-0) |
+| `gitlab_ci`       | `gitlab_ci_pipeline_adapter.py` | [gitlab-adapter](https://gitlab.opencode.de/kommi/adapter/gitlab-adapter)     | Boris van Benthem                    | MIT No Attribution (MIT-0) |
+| `table_analysis`  | `table_analysis.py`             | [tabellen-analyse](https://gitlab.opencode.de/kommi/adapter/tabellen-analyse) | Boris van Benthem                    | MIT No Attribution (MIT-0) |
+| `openstreetmap`   | `osm-adapter.py`                | [osm-adapter](https://gitlab.opencode.de/kommi/adapter/osm-adapter)           | Boris van Benthem (Stadt Oberhausen) | MIT                        |
+| `niotix_sensors`  | `niotix-adapter.py`             | [niotix-adapter](https://gitlab.opencode.de/kommi/adapter/niotix-adapter)     | Boris van Benthem                    | MIT                        |
 
 `osm-adapter` und `niotix-adapter` enthalten keine LICENSE-Datei; die Lizenz
 ist im Kopf der jeweiligen Quelldatei als `license: MIT` deklariert. Als
@@ -46,15 +46,15 @@ Lizenzeinräumung**. Wer diese Werkzeuge weiterverwendet, sollte die
 Rechtelage mit dem genannten Urheber klären. Auf Wunsch eines Urhebers wird
 das betreffende Werkzeug entfernt.
 
-| Werkzeug (Hub-ID) | Quelldatei | Quellprojekt | Urheber |
-| --- | --- | --- | --- |
-| `recht_nrw` | `recht-nrw-adapter.py` | [recht-nrw-adapter](https://gitlab.opencode.de/kommi/adapter/recht-nrw-adapter) | Florian Schade – Hochsauerlandkreis |
-| `bsi_stand_der_technik` | `bsi-stand-der-technik-adapter.py` | [bsi_stand_der_technik_tools](https://gitlab.opencode.de/kommi/adapter/bsi_stand_der_technik_tools) | Florian Schade – Hochsauerlandkreis |
-| `openlegaldata` | `openlegaldata-adapter.py` | [openlegaldata](https://gitlab.opencode.de/kommi/adapter/openlegaldata) | Florian Schade – Hochsauerlandkreis |
-| `gesetze_im_internet` | `gesetze_im_internet_tools.py` | [bundesgesetzadapter](https://gitlab.opencode.de/kommi/adapter/bundesgesetzadapter) | Boris van Benthem (KommI) |
-| `d3_documents` | `d3_document_tools.py` | [d3-adapter](https://gitlab.opencode.de/kommi/adapter/d3-adapter) | Boris van Benthem (KommI) |
-| `mediawiki` | `mediawiki-adapter.py` | [mediawiki-adapter](https://gitlab.opencode.de/kommi/adapter/mediawiki-adapter) | Boris van Benthem (Stadt Oberhausen) |
-| `allris_vorlagen` | `allris-vorlagen-tools.py` | [allris-adapter](https://gitlab.opencode.de/kommi/adapter/allris-adapter) | Stadt Oberhausen (Boris van Benthem) |
+| Werkzeug (Hub-ID)       | Quelldatei                         | Quellprojekt                                                                                        | Urheber                              |
+| ----------------------- | ---------------------------------- | --------------------------------------------------------------------------------------------------- | ------------------------------------ |
+| `recht_nrw`             | `recht-nrw-adapter.py`             | [recht-nrw-adapter](https://gitlab.opencode.de/kommi/adapter/recht-nrw-adapter)                     | Florian Schade – Hochsauerlandkreis  |
+| `bsi_stand_der_technik` | `bsi-stand-der-technik-adapter.py` | [bsi_stand_der_technik_tools](https://gitlab.opencode.de/kommi/adapter/bsi_stand_der_technik_tools) | Florian Schade – Hochsauerlandkreis  |
+| `openlegaldata`         | `openlegaldata-adapter.py`         | [openlegaldata](https://gitlab.opencode.de/kommi/adapter/openlegaldata)                             | Florian Schade – Hochsauerlandkreis  |
+| `gesetze_im_internet`   | `gesetze_im_internet_tools.py`     | [bundesgesetzadapter](https://gitlab.opencode.de/kommi/adapter/bundesgesetzadapter)                 | Boris van Benthem (KommI)            |
+| `d3_documents`          | `d3_document_tools.py`             | [d3-adapter](https://gitlab.opencode.de/kommi/adapter/d3-adapter)                                   | Boris van Benthem (KommI)            |
+| `mediawiki`             | `mediawiki-adapter.py`             | [mediawiki-adapter](https://gitlab.opencode.de/kommi/adapter/mediawiki-adapter)                     | Boris van Benthem (Stadt Oberhausen) |
+| `allris_vorlagen`       | `allris-vorlagen-tools.py`         | [allris-adapter](https://gitlab.opencode.de/kommi/adapter/allris-adapter)                           | Stadt Oberhausen (Boris van Benthem) |
 
 Bei `gesetze_im_internet` wurde zusätzlich die Kommentarzeile
 `# Target: OpenWebUI Tools Function` vor dem Docstring entfernt — der
