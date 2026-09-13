@@ -106,62 +106,57 @@ from pydantic import BaseModel, Field
 
 # Nutzer-Eingabe -> court_type-Wert (Filter "Instanz").
 INSTANZ_MAP: Dict[str, str] = {
-    "bgh": "BGH",
-    "olg": "OLG",
-    "lg": "LG",
-    "ag": "AG",
-    "arbg": "ArbG",
-    "lag": "LAG",
-    "bag": "BAG",
-    "sg": "SG",
-    "lsg": "LSG",
-    "bsg": "BSG",
-    "fg": "FG",
-    "bfh": "BFH",
-    "vg": "VG",
-    "ovg": "OVG",
-    "bverwg": "BVerwG",
-    "verfg": "VerfG",
+    'bgh': 'BGH',
+    'olg': 'OLG',
+    'lg': 'LG',
+    'ag': 'AG',
+    'arbg': 'ArbG',
+    'lag': 'LAG',
+    'bag': 'BAG',
+    'sg': 'SG',
+    'lsg': 'LSG',
+    'bsg': 'BSG',
+    'fg': 'FG',
+    'bfh': 'BFH',
+    'vg': 'VG',
+    'ovg': 'OVG',
+    'bverwg': 'BVerwG',
+    'verfg': 'VerfG',
 }
 
 # Nutzer-Eingabe -> court__jurisdiction-Wert (Filter "Gerichtsbarkeit").
 GERICHTSBARKEIT_MAP: Dict[str, str] = {
-    "ordentlich": "Ordentliche Gerichtsbarkeit",
-    "arbeit": "Arbeitsgerichtsbarkeit",
-    "verwaltung": "Verwaltungsgerichtsbarkeit",
-    "finanzen": "Finanzgerichtsbarkeit",
-    "sozial": "Sozialgerichtsbarkeit",
-    "verfassung": "Verfassungsgerichtsbarkeit",
+    'ordentlich': 'Ordentliche Gerichtsbarkeit',
+    'arbeit': 'Arbeitsgerichtsbarkeit',
+    'verwaltung': 'Verwaltungsgerichtsbarkeit',
+    'finanzen': 'Finanzgerichtsbarkeit',
+    'sozial': 'Sozialgerichtsbarkeit',
+    'verfassung': 'Verfassungsgerichtsbarkeit',
 }
 
 # Nutzer-Eingabe -> type-Wert (Filter "Entscheidungstyp").
 ENTSCHEIDUNGSTYP_MAP: Dict[str, str] = {
-    "urteil": "Urteil",
-    "endurteil": "Endurteil",
-    "beschluss": "Beschluss",
-    "gerichtsbescheid": "Gerichtsbescheid",
+    'urteil': 'Urteil',
+    'endurteil': 'Endurteil',
+    'beschluss': 'Beschluss',
+    'gerichtsbescheid': 'Gerichtsbescheid',
 }
 
 # Ueberschriften, anhand derer Entscheidungstexte grob gegliedert werden.
 CASE_SECTION_HEADINGS: Dict[str, Tuple[str, ...]] = {
-    "tenor": ("tenor",),
-    "tatbestand": ("tatbestand",),
-    "gruende": ("entscheidungsgruende", "gruende", "gründe", "aus den gründen"),
+    'tenor': ('tenor',),
+    'tatbestand': ('tatbestand',),
+    'gruende': ('entscheidungsgruende', 'gruende', 'gründe', 'aus den gründen'),
 }
 
-HINWEIS = (
-    "Daten von de.openlegaldata.io (Community-Projekt, Rohdaten ohne "
-    "amtliche Qualitaetssicherung). Fuer rechtsverbindliche Zwecke sind "
-    "die amtlichen Verkuendungsblaetter bzw. Gerichtsveroeffentlichungen "
-    "massgeblich."
-)
+HINWEIS = 'Daten von de.openlegaldata.io (Community-Projekt, Rohdaten ohne amtliche Qualitaetssicherung). Fuer rechtsverbindliche Zwecke sind die amtlichen Verkuendungsblaetter bzw. Gerichtsveroeffentlichungen massgeblich.'
 
 
 class _HtmlToText(HTMLParser):
     """Minimaler HTML->Text-Parser (block-bewusst) ohne externe Dependencies."""
 
-    _BLOCK = {"p", "div", "br", "li", "tr", "h1", "h2", "h3", "h4", "h5", "h6"}
-    _SKIP = {"script", "style"}
+    _BLOCK = {'p', 'div', 'br', 'li', 'tr', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'}
+    _SKIP = {'script', 'style'}
 
     def __init__(self) -> None:
         super().__init__(convert_charrefs=True)
@@ -173,115 +168,105 @@ class _HtmlToText(HTMLParser):
         if t in self._SKIP:
             self._skip += 1
         elif t in self._BLOCK:
-            self._parts.append("\n")
-        elif t == "td":
-            self._parts.append(" | ")
+            self._parts.append('\n')
+        elif t == 'td':
+            self._parts.append(' | ')
 
     def handle_endtag(self, tag: str) -> None:
         t = tag.lower()
         if t in self._SKIP and self._skip:
             self._skip -= 1
         elif t in self._BLOCK:
-            self._parts.append("\n")
+            self._parts.append('\n')
 
     def handle_data(self, data: str) -> None:
         if not self._skip and data:
             self._parts.append(data)
 
     def get_text(self) -> str:
-        raw = "".join(self._parts)
-        raw = re.sub(r"[ \t]+", " ", raw)
-        raw = re.sub(r" *\n *", "\n", raw)
-        raw = re.sub(r"\n{3,}", "\n\n", raw)
+        raw = ''.join(self._parts)
+        raw = re.sub(r'[ \t]+', ' ', raw)
+        raw = re.sub(r' *\n *', '\n', raw)
+        raw = re.sub(r'\n{3,}', '\n\n', raw)
         return raw.strip()
 
 
 def _html_to_text(html_str: str) -> str:
     parser = _HtmlToText()
-    parser.feed(html_str or "")
+    parser.feed(html_str or '')
     return parser.get_text()
 
 
 class Tools:
     class Valves(BaseModel):
         base_url: str = Field(
-            default="https://de.openlegaldata.io/api",
-            description="Basis-URL der OpenLegalData-API ohne abschliessenden Slash.",
+            default='https://de.openlegaldata.io/api',
+            description='Basis-URL der OpenLegalData-API ohne abschliessenden Slash.',
         )
         api_token: str = Field(
-            default="",
-            description=(
-                "Optionaler API-Token. Wenn gesetzt, wird "
-                "'Authorization: Token <token>' gesendet. Lesezugriffe "
-                "funktionieren auch ohne Token; ein Token kann hoehere "
-                "Rate-Limits ermoeglichen."
-            ),
+            default='',
+            description=("Optionaler API-Token. Wenn gesetzt, wird 'Authorization: Token <token>' gesendet. Lesezugriffe funktionieren auch ohne Token; ein Token kann hoehere Rate-Limits ermoeglichen."),
         )
         timeout_seconds: int = Field(
             default=20,
             ge=1,
             le=120,
-            description="Timeout fuer externe HTTP-Aufrufe in Sekunden.",
+            description='Timeout fuer externe HTTP-Aufrufe in Sekunden.',
         )
         min_request_interval: float = Field(
             default=1.0,
             ge=0.0,
             le=10.0,
-            description="Mindestabstand zwischen externen Requests in Sekunden (Rate-Limit).",
+            description='Mindestabstand zwischen externen Requests in Sekunden (Rate-Limit).',
         )
         max_search_results: int = Field(
             default=20,
             ge=1,
             le=100,
-            description="Globale Obergrenze fuer Suchtreffer.",
+            description='Globale Obergrenze fuer Suchtreffer.',
         )
         max_response_bytes: int = Field(
             default=15_000_000,
             ge=100_000,
             le=200_000_000,
-            description="Maximale Groesse einer einzelnen HTTP-Antwort in Bytes.",
+            description='Maximale Groesse einer einzelnen HTTP-Antwort in Bytes.',
         )
         max_output_chars: int = Field(
             default=0,
             ge=0,
-            description="Optionale Ausgabelaengenbegrenzung. 0 = unbegrenzt.",
+            description='Optionale Ausgabelaengenbegrenzung. 0 = unbegrenzt.',
         )
         max_law_pages: int = Field(
             default=20,
             ge=1,
             le=200,
-            description=(
-                "Obergrenze der Seiten (a page_size Eintraege), die "
-                "getOpenLegalDataGesetz beim Laden eines Gesetzbuchs "
-                "abruft. Schuetzt vor zu vielen sequentiellen API-Calls "
-                "bei sehr grossen Gesetzbuechern."
-            ),
+            description=('Obergrenze der Seiten (a page_size Eintraege), die getOpenLegalDataGesetz beim Laden eines Gesetzbuchs abruft. Schuetzt vor zu vielen sequentiellen API-Calls bei sehr grossen Gesetzbuechern.'),
         )
         debug: bool = Field(
             default=False,
-            description="Wenn true, werden Debug-Informationen ueber den event_emitter ausgegeben.",
+            description='Wenn true, werden Debug-Informationen ueber den event_emitter ausgegeben.',
         )
 
     class UserValves(BaseModel):
         preferred_output_language: str = Field(
-            default="de",
-            description="Bevorzugte Sprache fuer Hinweis- und Fehlermeldungen. Rechtstexte bleiben unveraendert.",
+            default='de',
+            description='Bevorzugte Sprache fuer Hinweis- und Fehlermeldungen. Rechtstexte bleiben unveraendert.',
         )
         default_case_search_limit: int = Field(
             default=10,
             ge=1,
             le=50,
-            description="Nutzerspezifisches Standardlimit fuer searchRechtsprechung.",
+            description='Nutzerspezifisches Standardlimit fuer searchRechtsprechung.',
         )
         default_law_search_limit: int = Field(
             default=10,
             ge=1,
             le=50,
-            description="Nutzerspezifisches Standardlimit fuer searchOpenLegalDataGesetz.",
+            description='Nutzerspezifisches Standardlimit fuer searchOpenLegalDataGesetz.',
         )
         pretty_json: bool = Field(
             default=True,
-            description="Wenn true, werden Tool-Ergebnisse als eingerueckes JSON ausgegeben.",
+            description='Wenn true, werden Tool-Ergebnisse als eingerueckes JSON ausgegeben.',
         )
 
     def __init__(self) -> None:
@@ -295,16 +280,16 @@ class Tools:
     # ------------------------------------------------------------------ #
 
     def _get_json_sync(self, path: str, params: Optional[Dict[str, Any]] = None) -> dict:
-        query = "?" + urlencode(params, doseq=True) if params else ""
-        url = self.valves.base_url.rstrip("/") + path + query
+        query = '?' + urlencode(params, doseq=True) if params else ''
+        url = self.valves.base_url.rstrip('/') + path + query
         headers = {
-            "Accept": "application/json",
-            "User-Agent": "OpenWebUI-OpenLegalData-Tools/1.0",
+            'Accept': 'application/json',
+            'User-Agent': 'OpenWebUI-OpenLegalData-Tools/1.0',
         }
         if self.valves.api_token:
-            headers["Authorization"] = f"Token {self.valves.api_token}"
-        raw = self._open(Request(url, headers=headers, method="GET"))
-        return json.loads(raw.decode("utf-8"))
+            headers['Authorization'] = f'Token {self.valves.api_token}'
+        raw = self._open(Request(url, headers=headers, method='GET'))
+        return json.loads(raw.decode('utf-8'))
 
     def _open(self, request: Request) -> bytes:
         with self._lock:
@@ -316,9 +301,7 @@ class Tools:
                     with urlopen(request, timeout=self.valves.timeout_seconds) as resp:
                         return resp.read(self.valves.max_response_bytes + 1)
                 except HTTPError as exc:
-                    raise ValueError(
-                        f"HTTP {exc.code} bei {request.full_url}: {exc.reason}"
-                    ) from exc
+                    raise ValueError(f'HTTP {exc.code} bei {request.full_url}: {exc.reason}') from exc
             finally:
                 self._last_request = time.time()
 
@@ -331,19 +314,14 @@ class Tools:
         result = json.dumps(payload, ensure_ascii=False, indent=indent)
         max_chars = int(self.valves.max_output_chars or 0)
         if max_chars > 0 and len(result) > max_chars:
-            return (
-                result[:max_chars]
-                + "\n... Ausgabe durch max_output_chars gekuerzt ..."
-            )
+            return result[:max_chars] + '\n... Ausgabe durch max_output_chars gekuerzt ...'
         return result
 
     async def _emit_status(self, __event_emitter__, description: str, done: bool) -> None:
         if __event_emitter__ is None:
             return
         try:
-            await __event_emitter__(
-                {"type": "status", "data": {"description": description, "done": done}}
-            )
+            await __event_emitter__({'type': 'status', 'data': {'description': description, 'done': done}})
         except Exception:
             return
 
@@ -353,12 +331,8 @@ class Tools:
         try:
             await __event_emitter__(
                 {
-                    "type": "message",
-                    "data": {
-                        "content": "\n```json\n"
-                        + json.dumps(payload, ensure_ascii=False, indent=2)
-                        + "\n```\n"
-                    },
+                    'type': 'message',
+                    'data': {'content': '\n```json\n' + json.dumps(payload, ensure_ascii=False, indent=2) + '\n```\n'},
                 }
             )
         except Exception:
@@ -377,33 +351,33 @@ class Tools:
         return refs
 
     def _normalize_paragraph_ref(self, value: Any) -> str:
-        text = html.unescape(str(value or "")).strip().lower()
+        text = html.unescape(str(value or '')).strip().lower()
         if not text:
-            return ""
-        text = text.replace("§§", "§")
-        text = re.sub(r"\b(paragraph|paragraf|para\.?|nr\.)\b", "", text)
-        text = re.sub(r"\bartikel\b", "art", text)
-        text = text.replace("§", "")
-        text = re.sub(r"[^a-z0-9]+", "", text)
-        if text.startswith("art"):
+            return ''
+        text = text.replace('§§', '§')
+        text = re.sub(r'\b(paragraph|paragraf|para\.?|nr\.)\b', '', text)
+        text = re.sub(r'\bartikel\b', 'art', text)
+        text = text.replace('§', '')
+        text = re.sub(r'[^a-z0-9]+', '', text)
+        if text.startswith('art'):
             return text
-        number = re.search(r"([0-9]+[a-z]?)", text)
+        number = re.search(r'([0-9]+[a-z]?)', text)
         return number.group(1) if number else text
 
     def _norm_matches(self, norm: Dict[str, Any], requested_refs: Set[str]) -> bool:
         candidates = {
-            self._normalize_paragraph_ref(norm.get("section") or ""),
-            self._normalize_paragraph_ref(norm.get("title") or ""),
+            self._normalize_paragraph_ref(norm.get('section') or ''),
+            self._normalize_paragraph_ref(norm.get('title') or ''),
         }
         return bool(candidates.intersection(requested_refs))
 
     def _resolve_entity(self, list_path: str, query: str) -> Tuple[Optional[dict], int]:
         """Sucht list_path?search=query und liefert (bestes_Ergebnis, Gesamtzahl_Treffer)."""
-        data = self._get_json_sync(list_path, {"search": query, "limit": 5})
-        results = data.get("results", [])
+        data = self._get_json_sync(list_path, {'search': query, 'limit': 5})
+        results = data.get('results', [])
         if not results:
             return None, 0
-        return results[0], data.get("count", len(results))
+        return results[0], data.get('count', len(results))
 
     # ------------------------------------------------------------------ #
     #  searchRechtsprechung                                              #
@@ -412,8 +386,7 @@ class Tools:
     @staticmethod
     def _umlaut_variant(text: str) -> str:
         """ue/ae/oe -> ü/ä/ö (Fallback fuer Umlaut-Umschreibungen in Eingaben)."""
-        for a, b in (("ue", "ü"), ("ae", "ä"), ("oe", "ö"),
-                     ("Ue", "Ü"), ("Ae", "Ä"), ("Oe", "Ö")):
+        for a, b in (('ue', 'ü'), ('ae', 'ä'), ('oe', 'ö'), ('Ue', 'Ü'), ('Ae', 'Ä'), ('Oe', 'Ö')):
             text = text.replace(a, b)
         return text
 
@@ -422,48 +395,46 @@ class Tools:
         /cases/search/ und 'id' fuer /cases/). Wirft ValueError bei Nichtauflösung."""
         if not gericht:
             return None, None
-        best, total = self._resolve_entity("/courts/", gericht)
+        best, total = self._resolve_entity('/courts/', gericht)
         if best is None:
             alt = self._umlaut_variant(gericht)
             if alt != gericht:
-                best, total = self._resolve_entity("/courts/", alt)
+                best, total = self._resolve_entity('/courts/', alt)
         if best is None:
             raise ValueError(f"Gericht '{gericht}' nicht gefunden. Bitte Name/Ort/Slug pruefen.")
         resolution = {
-            "query": gericht,
-            "resolved_name": best.get("name"),
-            "resolved_code": best.get("code"),
-            "resolved_id": best.get("id"),
-            "total_matches": total,
+            'query': gericht,
+            'resolved_name': best.get('name'),
+            'resolved_code': best.get('code'),
+            'resolved_id': best.get('id'),
+            'total_matches': total,
         }
         return best, resolution
 
-    def _resolve_court_graceful(
-        self, gericht: str
-    ) -> Tuple[Optional[dict], Optional[Dict[str, Any]], Optional[str]]:
+    def _resolve_court_graceful(self, gericht: str) -> Tuple[Optional[dict], Optional[Dict[str, Any]], Optional[str]]:
         """Wie _resolve_court, aber ohne Abbruch: bei Nichtauflösung
         (best, resolution)=None und eine Warnung als drittes Element."""
-        if not (gericht or "").strip():
+        if not (gericht or '').strip():
             return None, None, None
         try:
             best, resolution = self._resolve_court(gericht.strip())
             return best, resolution, None
         except ValueError as exc:
-            return None, None, f"{exc} Suche wurde ohne Gerichtsfilter durchgefuehrt."
+            return None, None, f'{exc} Suche wurde ohne Gerichtsfilter durchgefuehrt.'
 
     @staticmethod
     def _validate_date(value: str, field_name: str) -> str:
         if not value:
-            return ""
-        if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", value.strip()):
-            raise ValueError(f"{field_name} muss im Format YYYY-MM-DD angegeben werden.")
+            return ''
+        if not re.fullmatch(r'\d{4}-\d{2}-\d{2}', value.strip()):
+            raise ValueError(f'{field_name} muss im Format YYYY-MM-DD angegeben werden.')
         return value.strip()
 
     @staticmethod
     def _looks_like_aktenzeichen(query: str) -> bool:
         """Grobe Heuristik: Aktenzeichen enthalten Schraegstrich + Ziffern
         (z. B. "12 SLa 775/25", "I ZR 78/25", "8 O 4860/25")."""
-        return "/" in query and any(c.isdigit() for c in query)
+        return '/' in query and any(c.isdigit() for c in query)
 
     @staticmethod
     def _clean_snippets(snippets: Optional[List[Dict[str, Any]]]) -> str:
@@ -471,22 +442,22 @@ class Tools:
         parts: List[str] = []
         seen: Set[str] = set()
         for sn in snippets or []:
-            txt = html.unescape(re.sub(r"</?em>", "", sn.get("text") or "")).strip()
+            txt = html.unescape(re.sub(r'</?em>', '', sn.get('text') or '')).strip()
             if txt and txt not in seen:
                 seen.add(txt)
                 parts.append(txt)
-        return " … ".join(parts)
+        return ' … '.join(parts)
 
     async def searchRechtsprechung(
         self,
         query: str,
-        gericht: str = "",
-        instanz: str = "",
-        gerichtsbarkeit: str = "",
-        entscheidungstyp: str = "",
-        datum_von: str = "",
-        datum_bis: str = "",
-        sortierung: str = "relevanz",
+        gericht: str = '',
+        instanz: str = '',
+        gerichtsbarkeit: str = '',
+        entscheidungstyp: str = '',
+        datum_von: str = '',
+        datum_bis: str = '',
+        sortierung: str = 'relevanz',
         limit: Optional[int] = None,
         __event_emitter__=None,
         __user__: Optional[dict] = None,
@@ -527,117 +498,121 @@ class Tools:
         :param limit: optionales Trefferlimit (durch max_search_results begrenzt).
         :return: JSON mit Fundstellen (id, slug, ... plus snippet bzw. file_number).
         """
-        safe_query = (str(query) if query is not None else "").strip()
-        await self._emit_status(__event_emitter__, f"searchRechtsprechung gestartet: {safe_query or '(Liste nach Datum)'}", done=False)
+        safe_query = (str(query) if query is not None else '').strip()
+        await self._emit_status(__event_emitter__, f'searchRechtsprechung gestartet: {safe_query or "(Liste nach Datum)"}', done=False)
         try:
             if len(safe_query) > 200:
-                raise ValueError("query ist zu lang; maximal 200 Zeichen sind erlaubt.")
+                raise ValueError('query ist zu lang; maximal 200 Zeichen sind erlaubt.')
 
             effective_limit = limit if limit is not None else self.user_valves.default_case_search_limit
             effective_limit = max(1, min(int(effective_limit), self.valves.max_search_results))
-            datum_von = self._validate_date(datum_von, "datum_von")
-            datum_bis = self._validate_date(datum_bis, "datum_bis")
-            sort = (sortierung or "relevanz").strip().lower()
+            datum_von = self._validate_date(datum_von, 'datum_von')
+            datum_bis = self._validate_date(datum_bis, 'datum_bis')
+            sort = (sortierung or 'relevanz').strip().lower()
 
-            base_url = self.valves.base_url.rstrip("/")
+            base_url = self.valves.base_url.rstrip('/')
 
             # 0) Liste-Pfad: leere query -> Entscheidungen nach Datum ueber
             #    den DB-Endpunkt /cases/ (ordering + date_after/date_before
             #    funktionieren hier serverseitig).
             if not safe_query:
-                ordering = "date" if sort == "aelteste" else "-date"
+                ordering = 'date' if sort == 'aelteste' else '-date'
                 court_obj, court_resolution, court_warning = self._resolve_court_graceful(gericht)
                 need_client_filter = bool(instanz or gerichtsbarkeit or entscheidungstyp)
                 fetch_size = min(100, max(effective_limit, 50)) if need_client_filter else effective_limit
-                params = {"ordering": ordering, "page_size": fetch_size}
-                if court_obj is not None and court_obj.get("id") is not None:
-                    params["court"] = court_obj.get("id")
+                params = {'ordering': ordering, 'page_size': fetch_size}
+                if court_obj is not None and court_obj.get('id') is not None:
+                    params['court'] = court_obj.get('id')
                 if datum_von:
-                    params["date_after"] = datum_von
+                    params['date_after'] = datum_von
                 if datum_bis:
-                    params["date_before"] = datum_bis
-                data = await asyncio.to_thread(self._get_json_sync, "/cases/", params)
-                raw = data.get("results", [])
+                    params['date_before'] = datum_bis
+                data = await asyncio.to_thread(self._get_json_sync, '/cases/', params)
+                raw = data.get('results', [])
                 if gerichtsbarkeit:
                     jur = GERICHTSBARKEIT_MAP.get(gerichtsbarkeit.strip().lower(), gerichtsbarkeit.strip())
-                    raw = [r for r in raw if (r.get("court") or {}).get("jurisdiction") == jur]
+                    raw = [r for r in raw if (r.get('court') or {}).get('jurisdiction') == jur]
                 if entscheidungstyp:
                     typ = ENTSCHEIDUNGSTYP_MAP.get(entscheidungstyp.strip().lower(), entscheidungstyp.strip())
-                    raw = [r for r in raw if (r.get("type") or "") == typ]
+                    raw = [r for r in raw if (r.get('type') or '') == typ]
                 if instanz:
                     prefix = INSTANZ_MAP.get(instanz.strip().lower(), instanz.strip()).lower()
-                    raw = [r for r in raw if prefix in ((r.get("court") or {}).get("level_of_appeal") or "").lower()]
+                    raw = [r for r in raw if prefix in ((r.get('court') or {}).get('level_of_appeal') or '').lower()]
                 raw = raw[:effective_limit]
                 results = []
                 for hit in raw:
-                    court = hit.get("court") or {}
-                    results.append({
-                        "id": hit.get("id"),
-                        "slug": hit.get("slug"),
-                        "court_name": court.get("name"),
-                        "court_jurisdiction": court.get("jurisdiction"),
-                        "file_number": hit.get("file_number"),
-                        "date": hit.get("date"),
-                        "type": hit.get("type"),
-                        "ecli": hit.get("ecli") or None,
-                        "url": hit.get("source_url") or f"https://de.openlegaldata.io/case/{hit.get('slug')}",
-                    })
+                    court = hit.get('court') or {}
+                    results.append(
+                        {
+                            'id': hit.get('id'),
+                            'slug': hit.get('slug'),
+                            'court_name': court.get('name'),
+                            'court_jurisdiction': court.get('jurisdiction'),
+                            'file_number': hit.get('file_number'),
+                            'date': hit.get('date'),
+                            'type': hit.get('type'),
+                            'ecli': hit.get('ecli') or None,
+                            'url': hit.get('source_url') or f'https://de.openlegaldata.io/case/{hit.get("slug")}',
+                        }
+                    )
                 payload = {
-                    "query": "",
-                    "mode": "liste",
-                    "source_url": base_url + "/cases/?" + urlencode(params, doseq=True),
-                    "total": data.get("count", len(results)),
-                    "count": len(results),
-                    "limit": effective_limit,
-                    "filters": {
-                        "gericht": gericht or None,
-                        "instanz": instanz or None,
-                        "gerichtsbarkeit": gerichtsbarkeit or None,
-                        "entscheidungstyp": entscheidungstyp or None,
-                        "datum_von": datum_von or None,
-                        "datum_bis": datum_bis or None,
-                        "sortierung": "aelteste" if ordering == "date" else "neueste",
+                    'query': '',
+                    'mode': 'liste',
+                    'source_url': base_url + '/cases/?' + urlencode(params, doseq=True),
+                    'total': data.get('count', len(results)),
+                    'count': len(results),
+                    'limit': effective_limit,
+                    'filters': {
+                        'gericht': gericht or None,
+                        'instanz': instanz or None,
+                        'gerichtsbarkeit': gerichtsbarkeit or None,
+                        'entscheidungstyp': entscheidungstyp or None,
+                        'datum_von': datum_von or None,
+                        'datum_bis': datum_bis or None,
+                        'sortierung': 'aelteste' if ordering == 'date' else 'neueste',
                     },
-                    "results": results,
-                    "hinweis": HINWEIS,
+                    'results': results,
+                    'hinweis': HINWEIS,
                 }
                 if court_resolution is not None:
-                    payload["court_resolution"] = court_resolution
+                    payload['court_resolution'] = court_resolution
                 if court_warning is not None:
-                    payload["warning"] = court_warning
-                await self._emit_status(__event_emitter__, f"searchRechtsprechung abgeschlossen: {len(results)} Treffer (Liste)", done=True)
+                    payload['warning'] = court_warning
+                await self._emit_status(__event_emitter__, f'searchRechtsprechung abgeschlossen: {len(results)} Treffer (Liste)', done=True)
                 return self._to_json(payload)
 
             # 1) Aktenzeichen-Pfad: exakte Suche ueber /cases/?file_number=
             if self._looks_like_aktenzeichen(safe_query):
-                az_params = {"file_number": safe_query, "page_size": effective_limit}
-                az_data = await asyncio.to_thread(self._get_json_sync, "/cases/", az_params)
-                az_hits = az_data.get("results", [])
+                az_params = {'file_number': safe_query, 'page_size': effective_limit}
+                az_data = await asyncio.to_thread(self._get_json_sync, '/cases/', az_params)
+                az_hits = az_data.get('results', [])
                 if az_hits:
                     results = []
                     for hit in az_hits[:effective_limit]:
-                        court = hit.get("court") or {}
-                        results.append({
-                            "id": hit.get("id"),
-                            "slug": hit.get("slug"),
-                            "court_name": court.get("name"),
-                            "file_number": hit.get("file_number"),
-                            "date": hit.get("date"),
-                            "type": hit.get("type"),
-                            "ecli": hit.get("ecli") or None,
-                            "url": hit.get("source_url") or f"https://de.openlegaldata.io/case/{hit.get('slug')}",
-                        })
+                        court = hit.get('court') or {}
+                        results.append(
+                            {
+                                'id': hit.get('id'),
+                                'slug': hit.get('slug'),
+                                'court_name': court.get('name'),
+                                'file_number': hit.get('file_number'),
+                                'date': hit.get('date'),
+                                'type': hit.get('type'),
+                                'ecli': hit.get('ecli') or None,
+                                'url': hit.get('source_url') or f'https://de.openlegaldata.io/case/{hit.get("slug")}',
+                            }
+                        )
                     payload: Dict[str, Any] = {
-                        "query": safe_query,
-                        "mode": "aktenzeichen",
-                        "source_url": base_url + "/cases/?" + urlencode(az_params, doseq=True),
-                        "total": az_data.get("count", len(results)),
-                        "count": len(results),
-                        "limit": effective_limit,
-                        "results": results,
-                        "hinweis": HINWEIS,
+                        'query': safe_query,
+                        'mode': 'aktenzeichen',
+                        'source_url': base_url + '/cases/?' + urlencode(az_params, doseq=True),
+                        'total': az_data.get('count', len(results)),
+                        'count': len(results),
+                        'limit': effective_limit,
+                        'results': results,
+                        'hinweis': HINWEIS,
                     }
-                    await self._emit_status(__event_emitter__, f"searchRechtsprechung abgeschlossen: {len(results)} Treffer (Aktenzeichen)", done=True)
+                    await self._emit_status(__event_emitter__, f'searchRechtsprechung abgeschlossen: {len(results)} Treffer (Aktenzeichen)', done=True)
                     return self._to_json(payload)
                 # kein exakter AZ-Treffer -> weiter mit Volltextsuche
 
@@ -645,84 +620,86 @@ class Tools:
             # Gericht auflösen; bei Misserfolg nicht die ganze Suche abbrechen,
             # sondern ohne Gerichtsfilter weitersuchen und warnen.
             court_obj, court_resolution, court_warning = self._resolve_court_graceful(gericht)
-            court_code = court_obj.get("code") if court_obj else None
-            need_client_filter = bool(
-                instanz or datum_von or datum_bis or sort in ("neueste", "aelteste")
-            )
+            court_code = court_obj.get('code') if court_obj else None
+            need_client_filter = bool(instanz or datum_von or datum_bis or sort in ('neueste', 'aelteste'))
             fetch_size = min(100, max(effective_limit, 50)) if need_client_filter else effective_limit
-            params: Dict[str, Any] = {"text": safe_query, "page_size": fetch_size}
+            params: Dict[str, Any] = {'text': safe_query, 'page_size': fetch_size}
             if court_code:
-                params["court"] = court_code
+                params['court'] = court_code
             if gerichtsbarkeit:
-                params["court_jurisdiction"] = GERICHTSBARKEIT_MAP.get(
-                    gerichtsbarkeit.strip().lower(), gerichtsbarkeit.strip()
-                )
+                params['court_jurisdiction'] = GERICHTSBARKEIT_MAP.get(gerichtsbarkeit.strip().lower(), gerichtsbarkeit.strip())
             if entscheidungstyp:
-                params["decision_type"] = ENTSCHEIDUNGSTYP_MAP.get(
-                    entscheidungstyp.strip().lower(), entscheidungstyp.strip()
-                )
+                params['decision_type'] = ENTSCHEIDUNGSTYP_MAP.get(entscheidungstyp.strip().lower(), entscheidungstyp.strip())
 
-            data = await asyncio.to_thread(self._get_json_sync, "/cases/search/", params)
-            raw = data.get("results", [])
+            data = await asyncio.to_thread(self._get_json_sync, '/cases/search/', params)
+            raw = data.get('results', [])
 
             # Client-seitige Filter (serverseitig nicht verfuegbar/zuverlaessig)
             if instanz:
                 prefix = INSTANZ_MAP.get(instanz.strip().lower(), instanz.strip()).upper()
-                raw = [r for r in raw if str(r.get("court") or "").upper().startswith(prefix)]
+                raw = [r for r in raw if str(r.get('court') or '').upper().startswith(prefix)]
             if datum_von:
-                raw = [r for r in raw if (r.get("date") or "") >= datum_von]
+                raw = [r for r in raw if (r.get('date') or '') >= datum_von]
             if datum_bis:
-                raw = [r for r in raw if (r.get("date") or "") <= datum_bis]
-            if sort == "neueste":
-                raw = sorted(raw, key=lambda r: r.get("date") or "", reverse=True)
-            elif sort == "aelteste":
-                raw = sorted(raw, key=lambda r: r.get("date") or "")
+                raw = [r for r in raw if (r.get('date') or '') <= datum_bis]
+            if sort == 'neueste':
+                raw = sorted(raw, key=lambda r: r.get('date') or '', reverse=True)
+            elif sort == 'aelteste':
+                raw = sorted(raw, key=lambda r: r.get('date') or '')
             raw = raw[:effective_limit]
 
-            results = [{
-                "id": r.get("id"),
-                "slug": r.get("slug"),
-                "court": r.get("court"),
-                "court_jurisdiction": r.get("court_jurisdiction"),
-                "type": r.get("decision_type"),
-                "date": r.get("date"),
-                "snippet": self._clean_snippets(r.get("snippets")) or None,
-                "url": f"https://de.openlegaldata.io/case/{r.get('slug')}",
-            } for r in raw]
+            results = [
+                {
+                    'id': r.get('id'),
+                    'slug': r.get('slug'),
+                    'court': r.get('court'),
+                    'court_jurisdiction': r.get('court_jurisdiction'),
+                    'type': r.get('decision_type'),
+                    'date': r.get('date'),
+                    'snippet': self._clean_snippets(r.get('snippets')) or None,
+                    'url': f'https://de.openlegaldata.io/case/{r.get("slug")}',
+                }
+                for r in raw
+            ]
 
             payload = {
-                "query": safe_query,
-                "mode": "volltext",
-                "source_url": base_url + "/cases/search/?" + urlencode(params, doseq=True),
-                "total": data.get("count", len(results)),
-                "count": len(results),
-                "limit": effective_limit,
-                "filters": {
-                    "gericht": gericht or None,
-                    "instanz": instanz or None,
-                    "gerichtsbarkeit": gerichtsbarkeit or None,
-                    "entscheidungstyp": entscheidungstyp or None,
-                    "datum_von": datum_von or None,
-                    "datum_bis": datum_bis or None,
-                    "sortierung": sort,
+                'query': safe_query,
+                'mode': 'volltext',
+                'source_url': base_url + '/cases/search/?' + urlencode(params, doseq=True),
+                'total': data.get('count', len(results)),
+                'count': len(results),
+                'limit': effective_limit,
+                'filters': {
+                    'gericht': gericht or None,
+                    'instanz': instanz or None,
+                    'gerichtsbarkeit': gerichtsbarkeit or None,
+                    'entscheidungstyp': entscheidungstyp or None,
+                    'datum_von': datum_von or None,
+                    'datum_bis': datum_bis or None,
+                    'sortierung': sort,
                 },
-                "results": results,
-                "hinweis": HINWEIS,
+                'results': results,
+                'hinweis': HINWEIS,
             }
             if court_resolution is not None:
-                payload["court_resolution"] = court_resolution
+                payload['court_resolution'] = court_resolution
             if court_warning is not None:
-                payload["warning"] = court_warning
+                payload['warning'] = court_warning
 
-            await self._emit_debug(__event_emitter__, {
-                "tool": "searchRechtsprechung", "query": safe_query,
-                "result_count": len(results), "total": payload["total"],
-            })
-            await self._emit_status(__event_emitter__, f"searchRechtsprechung abgeschlossen: {len(results)} Treffer", done=True)
+            await self._emit_debug(
+                __event_emitter__,
+                {
+                    'tool': 'searchRechtsprechung',
+                    'query': safe_query,
+                    'result_count': len(results),
+                    'total': payload['total'],
+                },
+            )
+            await self._emit_status(__event_emitter__, f'searchRechtsprechung abgeschlossen: {len(results)} Treffer', done=True)
             return self._to_json(payload)
         except Exception as exc:
-            await self._emit_status(__event_emitter__, f"searchRechtsprechung fehlgeschlagen: {exc}", done=True)
-            return self._to_json({"error": str(exc), "tool": "searchRechtsprechung", "query": query})
+            await self._emit_status(__event_emitter__, f'searchRechtsprechung fehlgeschlagen: {exc}', done=True)
+            return self._to_json({'error': str(exc), 'tool': 'searchRechtsprechung', 'query': query})
 
     # ------------------------------------------------------------------ #
     #  getRechtsprechung                                                  #
@@ -730,11 +707,11 @@ class Tools:
 
     def _split_case_sections(self, text: str) -> Dict[str, str]:
         """Grobe Gliederung anhand ueblicher Urteils-Ueberschriften. Best effort."""
-        lines = text.split("\n")
+        lines = text.split('\n')
         sections: Dict[str, List[str]] = {}
         current_key: Optional[str] = None
         for line in lines:
-            stripped_lower = line.strip().strip(":").lower()
+            stripped_lower = line.strip().strip(':').lower()
             matched_key = None
             for key, headings in CASE_SECTION_HEADINGS.items():
                 if stripped_lower in headings:
@@ -746,7 +723,7 @@ class Tools:
                 continue
             if current_key is not None:
                 sections[current_key].append(line)
-        return {k: "\n".join(v).strip() for k, v in sections.items() if "\n".join(v).strip()}
+        return {k: '\n'.join(v).strip() for k, v in sections.items() if '\n'.join(v).strip()}
 
     async def getRechtsprechung(
         self,
@@ -766,41 +743,38 @@ class Tools:
         :return: JSON mit Metadaten und Text (voll oder als sections-Liste).
         """
         # str() macht robust, falls das Modell die numerische id als Zahl uebergibt.
-        key = (str(case) if case is not None else "").strip()
-        await self._emit_status(__event_emitter__, f"getRechtsprechung gestartet: {key}", done=False)
+        key = (str(case) if case is not None else '').strip()
+        await self._emit_status(__event_emitter__, f'getRechtsprechung gestartet: {key}', done=False)
         try:
             if not key:
-                raise ValueError("case darf nicht leer sein.")
+                raise ValueError('case darf nicht leer sein.')
 
             # Aktenzeichen -> exakt auf eine Fall-id aufloesen.
             if self._looks_like_aktenzeichen(key):
-                lookup = await asyncio.to_thread(
-                    self._get_json_sync, "/cases/", {"file_number": key, "page_size": 1}
-                )
-                az_hits = lookup.get("results", [])
+                lookup = await asyncio.to_thread(self._get_json_sync, '/cases/', {'file_number': key, 'page_size': 1})
+                az_hits = lookup.get('results', [])
                 if not az_hits:
                     raise ValueError(f"Kein Fall mit Aktenzeichen '{key}' gefunden.")
-                key = str(az_hits[0].get("id"))
+                key = str(az_hits[0].get('id'))
 
-            data = await asyncio.to_thread(self._get_json_sync, f"/cases/{key}/")
-            court = data.get("court") or {}
-            content_html = data.get("content") or ""
+            data = await asyncio.to_thread(self._get_json_sync, f'/cases/{key}/')
+            court = data.get('court') or {}
+            content_html = data.get('content') or ''
             text = _html_to_text(content_html)
             if not text:
-                raise ValueError("Konnte den Entscheidungstext nicht laden/extrahieren.")
+                raise ValueError('Konnte den Entscheidungstext nicht laden/extrahieren.')
 
             base = {
-                "case": key,
-                "id": data.get("id"),
-                "slug": data.get("slug"),
-                "court_name": court.get("name"),
-                "file_number": data.get("file_number"),
-                "date": data.get("date"),
-                "type": data.get("type"),
-                "ecli": data.get("ecli") or None,
-                "source_url": data.get("source_url")
-                or f"https://de.openlegaldata.io/case/{data.get('slug')}",
-                "hinweis": HINWEIS,
+                'case': key,
+                'id': data.get('id'),
+                'slug': data.get('slug'),
+                'court_name': court.get('name'),
+                'file_number': data.get('file_number'),
+                'date': data.get('date'),
+                'type': data.get('type'),
+                'ecli': data.get('ecli') or None,
+                'source_url': data.get('source_url') or f'https://de.openlegaldata.io/case/{data.get("slug")}',
+                'hinweis': HINWEIS,
             }
 
             requested_sections = [s.strip().lower() for s in (abschnitte or []) if s.strip()]
@@ -810,32 +784,37 @@ class Tools:
                 if selected:
                     payload = {
                         **base,
-                        "mode": "sections",
-                        "requested": requested_sections,
-                        "sections": [{"name": k, "text": v} for k, v in selected.items()],
+                        'mode': 'sections',
+                        'requested': requested_sections,
+                        'sections': [{'name': k, 'text': v} for k, v in selected.items()],
                     }
                 else:
                     payload = {
                         **base,
-                        "mode": "fulltext",
-                        "text": text,
-                        "warning": "Abschnittsgliederung nicht erkannt, Volltext zurueckgegeben.",
+                        'mode': 'fulltext',
+                        'text': text,
+                        'warning': 'Abschnittsgliederung nicht erkannt, Volltext zurueckgegeben.',
                     }
             else:
-                payload = {**base, "mode": "fulltext", "text": text}
+                payload = {**base, 'mode': 'fulltext', 'text': text}
 
             max_chars = int(self.valves.max_output_chars or 0)
-            if payload.get("mode") == "fulltext" and max_chars > 0 and len(payload.get("text", "")) > max_chars:
-                payload["truncated"] = True
+            if payload.get('mode') == 'fulltext' and max_chars > 0 and len(payload.get('text', '')) > max_chars:
+                payload['truncated'] = True
 
-            await self._emit_debug(__event_emitter__, {
-                "tool": "getRechtsprechung", "case": key, "mode": payload.get("mode"),
-            })
-            await self._emit_status(__event_emitter__, f"getRechtsprechung abgeschlossen: {key}", done=True)
+            await self._emit_debug(
+                __event_emitter__,
+                {
+                    'tool': 'getRechtsprechung',
+                    'case': key,
+                    'mode': payload.get('mode'),
+                },
+            )
+            await self._emit_status(__event_emitter__, f'getRechtsprechung abgeschlossen: {key}', done=True)
             return self._to_json(payload)
         except Exception as exc:
-            await self._emit_status(__event_emitter__, f"getRechtsprechung fehlgeschlagen: {exc}", done=True)
-            return self._to_json({"error": str(exc), "tool": "getRechtsprechung", "case": case})
+            await self._emit_status(__event_emitter__, f'getRechtsprechung fehlgeschlagen: {exc}', done=True)
+            return self._to_json({'error': str(exc), 'tool': 'getRechtsprechung', 'case': case})
 
     # ------------------------------------------------------------------ #
     #  searchOpenLegalDataGesetz                                          #
@@ -854,28 +833,24 @@ class Tools:
         # ungefilterte Liste). Der einzige verlaessliche Filter ist der
         # exakte Kuerzel-Match ueber ?code=. Deshalb: nur Kuerzel wie
         # "BGB"/"StGB"/"GG" werden unterstuetzt, keine Titelsuche.
-        results = self._get_json_sync("/law_books/", {"code": key}).get("results", [])
+        results = self._get_json_sync('/law_books/', {'code': key}).get('results', [])
         if not results:
-            results = self._get_json_sync("/law_books/", {"code": key.upper()}).get("results", [])
+            results = self._get_json_sync('/law_books/', {'code': key.upper()}).get('results', [])
         if not results:
-            raise ValueError(
-                f"Gesetzbuch '{gesetzbuch}' nicht gefunden. Aufgrund einer "
-                "API-Einschraenkung wird nur der exakte Kuerzel-Code "
-                "unterstuetzt (z. B. 'BGB', 'StGB', 'GG'), keine Titelsuche."
-            )
+            raise ValueError(f"Gesetzbuch '{gesetzbuch}' nicht gefunden. Aufgrund einer API-Einschraenkung wird nur der exakte Kuerzel-Code unterstuetzt (z. B. 'BGB', 'StGB', 'GG'), keine Titelsuche.")
         # Mehrere Revisionen moeglich (z. B. BGB 2017 + 2026): aktuellste waehlen.
         best = max(
             results,
-            key=lambda r: (r.get("latest") is True, r.get("revision_date") or ""),
+            key=lambda r: (r.get('latest') is True, r.get('revision_date') or ''),
         )
         resolution = {
-            "query": gesetzbuch,
-            "resolved_title": best.get("title"),
-            "resolved_code": best.get("code"),
-            "resolved_id": best.get("id"),
-            "total_matches": len(results),
+            'query': gesetzbuch,
+            'resolved_title': best.get('title'),
+            'resolved_code': best.get('code'),
+            'resolved_id': best.get('id'),
+            'total_matches': len(results),
         }
-        return best.get("id"), resolution
+        return best.get('id'), resolution
 
     async def searchOpenLegalDataGesetz(
         self,
@@ -902,19 +877,16 @@ class Tools:
         :param limit: optionales Trefferlimit (durch max_search_results begrenzt).
         :return: JSON mit Fundstellen (id, book_code, title, section, slug, book_slug).
         """
-        safe_query = (query or "").strip()
-        await self._emit_status(__event_emitter__, f"searchOpenLegalDataGesetz gestartet: {safe_query}", done=False)
+        safe_query = (query or '').strip()
+        await self._emit_status(__event_emitter__, f'searchOpenLegalDataGesetz gestartet: {safe_query}', done=False)
         try:
             if not safe_query:
-                raise ValueError("query darf nicht leer sein.")
+                raise ValueError('query darf nicht leer sein.')
             if len(safe_query) > 200:
-                raise ValueError("query ist zu lang; maximal 200 Zeichen sind erlaubt.")
-            gesetzbuch_str = (str(gesetzbuch) if gesetzbuch is not None else "").strip()
+                raise ValueError('query ist zu lang; maximal 200 Zeichen sind erlaubt.')
+            gesetzbuch_str = (str(gesetzbuch) if gesetzbuch is not None else '').strip()
             if not gesetzbuch_str:
-                raise ValueError(
-                    "gesetzbuch darf nicht leer sein (die OpenLegalData-API "
-                    "unterstuetzt keine Volltextsuche ueber alle Gesetze hinweg)."
-                )
+                raise ValueError('gesetzbuch darf nicht leer sein (die OpenLegalData-API unterstuetzt keine Volltextsuche ueber alle Gesetze hinweg).')
 
             effective_limit = limit if limit is not None else self.user_valves.default_law_search_limit
             effective_limit = max(1, min(int(effective_limit), self.valves.max_search_results))
@@ -925,43 +897,47 @@ class Tools:
 
             norms_raw, truncated = await self._load_law_book_norms(book_id)
             query_lower = safe_query.lower()
-            matches = [
-                n for n in norms_raw
-                if query_lower in (n.get("title") or "").lower()
-                or query_lower in (n.get("section") or "").lower()
+            matches = [n for n in norms_raw if query_lower in (n.get('title') or '').lower() or query_lower in (n.get('section') or '').lower()]
+            results = [
+                {
+                    'id': hit.get('id'),
+                    'book_code': hit.get('book_code'),
+                    'title': hit.get('title'),
+                    'section': hit.get('section'),
+                    'slug': hit.get('slug'),
+                    'book_slug': hit.get('book_slug'),
+                }
+                for hit in matches[:effective_limit]
             ]
-            results = [{
-                "id": hit.get("id"),
-                "book_code": hit.get("book_code"),
-                "title": hit.get("title"),
-                "section": hit.get("section"),
-                "slug": hit.get("slug"),
-                "book_slug": hit.get("book_slug"),
-            } for hit in matches[:effective_limit]]
 
             payload: Dict[str, Any] = {
-                "query": safe_query,
-                "gesetzbuch": gesetzbuch,
-                "total": len(matches),
-                "count": len(results),
-                "limit": effective_limit,
-                "results": results,
-                "hinweis": HINWEIS,
+                'query': safe_query,
+                'gesetzbuch': gesetzbuch,
+                'total': len(matches),
+                'count': len(results),
+                'limit': effective_limit,
+                'results': results,
+                'hinweis': HINWEIS,
             }
             if book_resolution is not None:
-                payload["book_resolution"] = book_resolution
+                payload['book_resolution'] = book_resolution
             if truncated:
-                payload["warning"] = "Gesetzbuch zu gross, nur Teilmenge durchsucht (max_law_pages erreicht)."
+                payload['warning'] = 'Gesetzbuch zu gross, nur Teilmenge durchsucht (max_law_pages erreicht).'
 
-            await self._emit_debug(__event_emitter__, {
-                "tool": "searchOpenLegalDataGesetz", "query": safe_query,
-                "result_count": len(results), "total": payload["total"],
-            })
-            await self._emit_status(__event_emitter__, f"searchOpenLegalDataGesetz abgeschlossen: {len(results)} Treffer", done=True)
+            await self._emit_debug(
+                __event_emitter__,
+                {
+                    'tool': 'searchOpenLegalDataGesetz',
+                    'query': safe_query,
+                    'result_count': len(results),
+                    'total': payload['total'],
+                },
+            )
+            await self._emit_status(__event_emitter__, f'searchOpenLegalDataGesetz abgeschlossen: {len(results)} Treffer', done=True)
             return self._to_json(payload)
         except Exception as exc:
-            await self._emit_status(__event_emitter__, f"searchOpenLegalDataGesetz fehlgeschlagen: {exc}", done=True)
-            return self._to_json({"error": str(exc), "tool": "searchOpenLegalDataGesetz", "query": query})
+            await self._emit_status(__event_emitter__, f'searchOpenLegalDataGesetz fehlgeschlagen: {exc}', done=True)
+            return self._to_json({'error': str(exc), 'tool': 'searchOpenLegalDataGesetz', 'query': query})
 
     # ------------------------------------------------------------------ #
     #  getOpenLegalDataGesetz                                             #
@@ -978,12 +954,13 @@ class Tools:
         truncated = False
         for page in range(self.valves.max_law_pages):
             data = await asyncio.to_thread(
-                self._get_json_sync, "/laws/",
-                {"book_id": book_id, "limit": page_size, "offset": page * page_size},
+                self._get_json_sync,
+                '/laws/',
+                {'book_id': book_id, 'limit': page_size, 'offset': page * page_size},
             )
-            batch = data.get("results", [])
+            batch = data.get('results', [])
             norms.extend(batch)
-            if data.get("next") is None or not batch:
+            if data.get('next') is None or not batch:
                 break
         else:
             truncated = True
@@ -1006,13 +983,13 @@ class Tools:
         :param fulltext: Wenn true, kompletter Text aller Normen. Wenn false und keine Paragraphen angegeben sind, wird nur das Inhaltsverzeichnis (toc) ausgegeben.
         :return: JSON mit Inhaltsverzeichnis, ausgewaehlten Paragraphen oder Volltext.
         """
-        key = (str(gesetzbuch) if gesetzbuch is not None else "").strip()
+        key = (str(gesetzbuch) if gesetzbuch is not None else '').strip()
         requested_refs = self._normalize_requested_refs(paragraphs or [])
-        mode = "fulltext" if fulltext else ("paragraphs" if requested_refs else "toc")
-        await self._emit_status(__event_emitter__, f"getOpenLegalDataGesetz gestartet: {key} ({mode})", done=False)
+        mode = 'fulltext' if fulltext else ('paragraphs' if requested_refs else 'toc')
+        await self._emit_status(__event_emitter__, f'getOpenLegalDataGesetz gestartet: {key} ({mode})', done=False)
         try:
             if not key:
-                raise ValueError("gesetzbuch darf nicht leer sein.")
+                raise ValueError('gesetzbuch darf nicht leer sein.')
 
             book_id, book_resolution = self._resolve_law_book(key)
             if book_id is None:
@@ -1020,68 +997,80 @@ class Tools:
 
             norms_raw, truncated = await self._load_law_book_norms(book_id)
             if not norms_raw:
-                raise ValueError(f"Keine Normen fuer Gesetzbuch-ID {book_id} gefunden.")
+                raise ValueError(f'Keine Normen fuer Gesetzbuch-ID {book_id} gefunden.')
 
-            book_code = norms_raw[0].get("book_code")
-            source_url = f"{self.valves.base_url.rstrip('/')}/laws/?book_id={book_id}"
+            book_code = norms_raw[0].get('book_code')
+            source_url = f'{self.valves.base_url.rstrip("/")}/laws/?book_id={book_id}'
             base = {
-                "gesetzbuch": gesetzbuch,
-                "book_id": book_id,
-                "book_code": book_code,
-                "source_url": source_url,
-                "mode": mode,
-                "hinweis": HINWEIS,
+                'gesetzbuch': gesetzbuch,
+                'book_id': book_id,
+                'book_code': book_code,
+                'source_url': source_url,
+                'mode': mode,
+                'hinweis': HINWEIS,
             }
             if book_resolution is not None:
-                base["book_resolution"] = book_resolution
+                base['book_resolution'] = book_resolution
 
             if fulltext:
                 norms = []
                 for n in norms_raw:
-                    detail = await asyncio.to_thread(self._get_json_sync, f"/laws/{n.get('id')}/")
-                    norms.append({
-                        "id": n.get("id"),
-                        "section": n.get("section"),
-                        "title": n.get("title"),
-                        "text": _html_to_text(detail.get("content") or ""),
-                    })
-                payload = {**base, "count": len(norms), "norms": norms}
+                    detail = await asyncio.to_thread(self._get_json_sync, f'/laws/{n.get("id")}/')
+                    norms.append(
+                        {
+                            'id': n.get('id'),
+                            'section': n.get('section'),
+                            'title': n.get('title'),
+                            'text': _html_to_text(detail.get('content') or ''),
+                        }
+                    )
+                payload = {**base, 'count': len(norms), 'norms': norms}
             elif requested_refs:
                 selected_meta = [n for n in norms_raw if self._norm_matches(n, requested_refs)]
                 norms = []
                 for n in selected_meta:
-                    detail = await asyncio.to_thread(self._get_json_sync, f"/laws/{n.get('id')}/")
-                    norms.append({
-                        "id": n.get("id"),
-                        "section": n.get("section"),
-                        "title": n.get("title"),
-                        "text": _html_to_text(detail.get("content") or ""),
-                    })
+                    detail = await asyncio.to_thread(self._get_json_sync, f'/laws/{n.get("id")}/')
+                    norms.append(
+                        {
+                            'id': n.get('id'),
+                            'section': n.get('section'),
+                            'title': n.get('title'),
+                            'text': _html_to_text(detail.get('content') or ''),
+                        }
+                    )
                 payload = {
                     **base,
-                    "requested": sorted(requested_refs),
-                    "count": len(norms),
-                    "norms": norms,
+                    'requested': sorted(requested_refs),
+                    'count': len(norms),
+                    'norms': norms,
                 }
                 if not norms:
-                    payload["warning"] = "Keine passenden Paragraphen im Gesetzbuch gefunden."
+                    payload['warning'] = 'Keine passenden Paragraphen im Gesetzbuch gefunden.'
             else:
-                toc = [{
-                    "id": n.get("id"),
-                    "section": n.get("section"),
-                    "title": n.get("title"),
-                } for n in norms_raw]
-                payload = {**base, "count": len(toc), "table_of_contents": toc}
+                toc = [
+                    {
+                        'id': n.get('id'),
+                        'section': n.get('section'),
+                        'title': n.get('title'),
+                    }
+                    for n in norms_raw
+                ]
+                payload = {**base, 'count': len(toc), 'table_of_contents': toc}
 
             if truncated:
-                payload["warning"] = "Gesetzbuch zu gross, nur Teilmenge geladen (max_law_pages erreicht)."
+                payload['warning'] = 'Gesetzbuch zu gross, nur Teilmenge geladen (max_law_pages erreicht).'
 
-            await self._emit_debug(__event_emitter__, {
-                "tool": "getOpenLegalDataGesetz", "gesetzbuch": key, "mode": mode,
-                "result_count": payload.get("count"),
-            })
-            await self._emit_status(__event_emitter__, f"getOpenLegalDataGesetz abgeschlossen: {key}", done=True)
+            await self._emit_debug(
+                __event_emitter__,
+                {
+                    'tool': 'getOpenLegalDataGesetz',
+                    'gesetzbuch': key,
+                    'mode': mode,
+                    'result_count': payload.get('count'),
+                },
+            )
+            await self._emit_status(__event_emitter__, f'getOpenLegalDataGesetz abgeschlossen: {key}', done=True)
             return self._to_json(payload)
         except Exception as exc:
-            await self._emit_status(__event_emitter__, f"getOpenLegalDataGesetz fehlgeschlagen: {exc}", done=True)
-            return self._to_json({"error": str(exc), "tool": "getOpenLegalDataGesetz", "gesetzbuch": gesetzbuch})
+            await self._emit_status(__event_emitter__, f'getOpenLegalDataGesetz fehlgeschlagen: {exc}', done=True)
+            return self._to_json({'error': str(exc), 'tool': 'getOpenLegalDataGesetz', 'gesetzbuch': gesetzbuch})

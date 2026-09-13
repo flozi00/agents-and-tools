@@ -78,45 +78,42 @@ from urllib.request import Request, urlopen
 
 from pydantic import BaseModel, Field
 
-RAW_BASE = "https://raw.githubusercontent.com/BSI-Bund/Stand-der-Technik-Bibliothek"
-GITHUB_BLOB_BASE = "https://github.com/BSI-Bund/Stand-der-Technik-Bibliothek/blob"
+RAW_BASE = 'https://raw.githubusercontent.com/BSI-Bund/Stand-der-Technik-Bibliothek'
+GITHUB_BLOB_BASE = 'https://github.com/BSI-Bund/Stand-der-Technik-Bibliothek/blob'
 # Der Viewer laedt einen Katalog per Deep-Link ?url=<raw-URL> (verifiziert am
 # Viewer-Quellcode: loadOscalDeepLink() -> params.getAll('url'); Typ wird via
 # detectOscalKind automatisch erkannt, 'kind' ist optional). Bewusst NUR EIN
 # Parameter, damit kein '&' im Link steht - ein '&' wird beim Markdown->HTML-
 # Rendern zu '&amp;' und zerlegt den Parameter (url -> amp;url), der Link bricht.
 # Ein Control-Anker wird nicht unterstuetzt -> die control_id steht in referenz_text.
-VIEWER_BASE = "https://bsi-community.github.io/Stand-der-Technik-Viewer/"
+VIEWER_BASE = 'https://bsi-community.github.io/Stand-der-Technik-Viewer/'
 
 
 def _viewer_deep_link(viewer_base: str, raw_url: str) -> str:
     """Baut einen Viewer-Deep-Link (Ein-Parameter), der den Katalog aus raw_url laedt."""
-    return f"{viewer_base}?url={quote(raw_url, safe='')}"
+    return f'{viewer_base}?url={quote(raw_url, safe="")}'
 
-HINWEIS = (
-    "Daten aus der BSI Stand-der-Technik-Bibliothek (GitHub, maschinenlesbar, "
-    "OSCAL). Teile sind Entwuerfe/Previews. Fuer verbindliche Zwecke sind die "
-    "amtlichen BSI-Veroeffentlichungen massgeblich."
-)
+
+HINWEIS = 'Daten aus der BSI Stand-der-Technik-Bibliothek (GitHub, maschinenlesbar, OSCAL). Teile sind Entwuerfe/Previews. Fuer verbindliche Zwecke sind die amtlichen BSI-Veroeffentlichungen massgeblich.'
 
 # key: stabiler Kurzname; path: Repo-Pfad; entwurf: aus Suche default ausgeblendet.
 CATALOGS = [
-    {"key": "kernel", "path": "Quellkataloge/Kernel/BSI-Stand-der-Technik-Kernel-catalog.json", "beschreibung": "BSI Stand der Technik - Kernkatalog", "entwurf": False},
-    {"key": "kernel-g0", "path": "Quellkataloge/Kernel/BSI-Stand-der-Technik-Kernel-G0-catalog.json", "beschreibung": "BSI Stand der Technik - Kernel G0", "entwurf": False},
-    {"key": "risikomanagement", "path": "Quellkataloge/Risikomanagement/BSI-Anforderungen-zum-Risikomanagement-catalog.json", "beschreibung": "BSI Anforderungen zum Risikomanagement", "entwurf": False},
-    {"key": "methodik", "path": "Quellkataloge/Methodik-Grundschutz++/BSI-Methodik-Grundschutz++-catalog.json", "beschreibung": "BSI Methodik Grundschutz++", "entwurf": False},
-    {"key": "grundschutz++", "path": "Anwenderkataloge/Grundschutz++/Grundschutz++-catalog.json", "beschreibung": "Grundschutz++ (Kompendium-Preview, Entwurf)", "entwurf": True},
-    {"key": "tls", "path": "Anwenderkataloge/Mindeststandard-TLS/Entwurf-Mindeststandard-TLS-catalog.json", "beschreibung": "Mindeststandard TLS (Entwurf)", "entwurf": True},
+    {'key': 'kernel', 'path': 'Quellkataloge/Kernel/BSI-Stand-der-Technik-Kernel-catalog.json', 'beschreibung': 'BSI Stand der Technik - Kernkatalog', 'entwurf': False},
+    {'key': 'kernel-g0', 'path': 'Quellkataloge/Kernel/BSI-Stand-der-Technik-Kernel-G0-catalog.json', 'beschreibung': 'BSI Stand der Technik - Kernel G0', 'entwurf': False},
+    {'key': 'risikomanagement', 'path': 'Quellkataloge/Risikomanagement/BSI-Anforderungen-zum-Risikomanagement-catalog.json', 'beschreibung': 'BSI Anforderungen zum Risikomanagement', 'entwurf': False},
+    {'key': 'methodik', 'path': 'Quellkataloge/Methodik-Grundschutz++/BSI-Methodik-Grundschutz++-catalog.json', 'beschreibung': 'BSI Methodik Grundschutz++', 'entwurf': False},
+    {'key': 'grundschutz++', 'path': 'Anwenderkataloge/Grundschutz++/Grundschutz++-catalog.json', 'beschreibung': 'Grundschutz++ (Kompendium-Preview, Entwurf)', 'entwurf': True},
+    {'key': 'tls', 'path': 'Anwenderkataloge/Mindeststandard-TLS/Entwurf-Mindeststandard-TLS-catalog.json', 'beschreibung': 'Mindeststandard TLS (Entwurf)', 'entwurf': True},
 ]
-CATALOGS_BY_KEY = {c["key"]: c for c in CATALOGS}
+CATALOGS_BY_KEY = {c['key']: c for c in CATALOGS}
 
-_PARAM_RE = re.compile(r"\{\{\s*insert:\s*param,\s*([^}\s]+)\s*\}\}")
-_UMLAUT = {"ä": "ae", "ö": "oe", "ü": "ue", "ß": "ss"}
+_PARAM_RE = re.compile(r'\{\{\s*insert:\s*param,\s*([^}\s]+)\s*\}\}')
+_UMLAUT = {'ä': 'ae', 'ö': 'oe', 'ü': 'ue', 'ß': 'ss'}
 
 
 def _fold(text: str) -> str:
     """Normalisiert Text fuer Matching: lowercase + Umlaut-Faltung."""
-    text = (text or "").lower()
+    text = (text or '').lower()
     for a, b in _UMLAUT.items():
         text = text.replace(a, b)
     return text
@@ -124,23 +121,23 @@ def _fold(text: str) -> str:
 
 def _iter_controls(catalog_json: Dict[str, Any]) -> Iterator[Tuple[Dict[str, Any], List[str]]]:
     """Yield (control, group_title_path) rekursiv ueber groups/controls/nested controls."""
-    root = catalog_json.get("catalog", catalog_json)
+    root = catalog_json.get('catalog', catalog_json)
 
     def walk_control(ctrl: Dict[str, Any], path: List[str]) -> Iterator[Tuple[Dict[str, Any], List[str]]]:
         yield ctrl, path
-        for sub in ctrl.get("controls", []) or []:
+        for sub in ctrl.get('controls', []) or []:
             yield from walk_control(sub, path)
 
     def walk_group(group: Dict[str, Any], path: List[str]) -> Iterator[Tuple[Dict[str, Any], List[str]]]:
-        new_path = path + [group.get("title") or group.get("id") or ""]
-        for ctrl in group.get("controls", []) or []:
+        new_path = path + [group.get('title') or group.get('id') or '']
+        for ctrl in group.get('controls', []) or []:
             yield from walk_control(ctrl, new_path)
-        for sub in group.get("groups", []) or []:
+        for sub in group.get('groups', []) or []:
             yield from walk_group(sub, new_path)
 
-    for group in root.get("groups", []) or []:
+    for group in root.get('groups', []) or []:
         yield from walk_group(group, [])
-    for ctrl in root.get("controls", []) or []:
+    for ctrl in root.get('controls', []) or []:
         yield from walk_control(ctrl, [])
 
 
@@ -148,19 +145,19 @@ def _iter_parts(parts: List[Dict[str, Any]]) -> Iterator[Dict[str, Any]]:
     """Yield alle parts rekursiv (inkl. subparts)."""
     for part in parts or []:
         yield part
-        yield from _iter_parts(part.get("parts", []) or [])
+        yield from _iter_parts(part.get('parts', []) or [])
 
 
 def _resolve_param_placeholders(prose: str, params: List[Dict[str, Any]]) -> str:
     """Ersetzt {{ insert: param, <id> }} durch params[].label (Fallback: id)."""
-    labels = {p.get("id"): (p.get("label") or p.get("id")) for p in (params or [])}
-    return _PARAM_RE.sub(lambda mtch: str(labels.get(mtch.group(1), mtch.group(1))), prose or "")
+    labels = {p.get('id'): (p.get('label') or p.get('id')) for p in (params or [])}
+    return _PARAM_RE.sub(lambda mtch: str(labels.get(mtch.group(1), mtch.group(1))), prose or '')
 
 
 def _prop(props: List[Dict[str, Any]], name: str) -> Optional[str]:
     for p in props or []:
-        if p.get("name") == name:
-            return p.get("value")
+        if p.get('name') == name:
+            return p.get('value')
     return None
 
 
@@ -172,39 +169,39 @@ def _control_to_record(
     referenz_url: str,
 ) -> Dict[str, Any]:
     """Wandelt ein OSCAL-Control in einen flachen, durchsuchbaren Record."""
-    params = ctrl.get("params", []) or []
+    params = ctrl.get('params', []) or []
     if isinstance(params, dict):  # Einzel-Param defensiv als Liste behandeln
         params = [params]
     statement_parts: List[str] = []
     guidance_parts: List[str] = []
-    for part in _iter_parts(ctrl.get("parts", []) or []):
-        prose = _resolve_param_placeholders(part.get("prose") or "", params)
+    for part in _iter_parts(ctrl.get('parts', []) or []):
+        prose = _resolve_param_placeholders(part.get('prose') or '', params)
         if not prose:
             continue
-        if part.get("name") == "guidance":
+        if part.get('name') == 'guidance':
             guidance_parts.append(prose)
         else:
             statement_parts.append(prose)
-    control_id = ctrl.get("id") or ""
-    titel = ctrl.get("title") or ""
-    anforderung = "\n".join(statement_parts).strip()
-    guidance = "\n".join(guidance_parts).strip()
-    props = ctrl.get("props", []) or []
-    such_text = _fold(" ".join([control_id, titel, anforderung, guidance]))
+    control_id = ctrl.get('id') or ''
+    titel = ctrl.get('title') or ''
+    anforderung = '\n'.join(statement_parts).strip()
+    guidance = '\n'.join(guidance_parts).strip()
+    props = ctrl.get('props', []) or []
+    such_text = _fold(' '.join([control_id, titel, anforderung, guidance]))
     return {
-        "control_id": control_id,
-        "katalog": catalog_key,
-        "katalog_beschreibung": beschreibung,
-        "gruppe": " > ".join([g for g in group_path if g]),
-        "titel": titel,
-        "anforderung": anforderung,
-        "guidance": guidance,
-        "sec_level": _prop(props, "sec_level"),
-        "effort_level": _prop(props, "effort_level"),
-        "referenz_text": f"BSI {beschreibung} · {control_id}",
-        "referenz_url": referenz_url,
-        "_such_text": such_text,
-        "_titel_fold": _fold(control_id + " " + titel),
+        'control_id': control_id,
+        'katalog': catalog_key,
+        'katalog_beschreibung': beschreibung,
+        'gruppe': ' > '.join([g for g in group_path if g]),
+        'titel': titel,
+        'anforderung': anforderung,
+        'guidance': guidance,
+        'sec_level': _prop(props, 'sec_level'),
+        'effort_level': _prop(props, 'effort_level'),
+        'referenz_text': f'BSI {beschreibung} · {control_id}',
+        'referenz_url': referenz_url,
+        '_such_text': such_text,
+        '_titel_fold': _fold(control_id + ' ' + titel),
     }
 
 
@@ -212,21 +209,92 @@ def _control_to_record(
 # nahezu jedem Control vorkommen und beim Keyword-Matching nur Rauschen erzeugen.
 # In gefalteter Form (Umlaute -> ae/oe/ue), da _query_terms erst faltet.
 _STOPWORDS = {
-    "der", "die", "das", "dass", "des", "dem", "den", "ein", "eine", "einer", "eines",
-    "einem", "einen", "und", "oder", "aber", "sowie", "ist", "sind", "war", "waren",
-    "sein", "wird", "werden", "wurde", "worden", "zu", "zur", "zum", "im", "in", "an",
-    "auf", "aus", "bei", "mit", "nach", "vor", "ueber", "unter", "durch", "fuer",
-    "gegen", "ohne", "um", "muss", "muessen", "soll", "sollen", "kann", "koennen",
-    "darf", "duerfen", "sollte", "sollten", "es", "er", "sie", "wir", "man", "auch",
-    "nur", "noch", "schon", "alle", "aller", "allen", "jede", "jeder", "jedes",
-    "nicht", "kein", "keine", "als", "wie", "wenn", "dann", "sowohl", "bzw",
+    'der',
+    'die',
+    'das',
+    'dass',
+    'des',
+    'dem',
+    'den',
+    'ein',
+    'eine',
+    'einer',
+    'eines',
+    'einem',
+    'einen',
+    'und',
+    'oder',
+    'aber',
+    'sowie',
+    'ist',
+    'sind',
+    'war',
+    'waren',
+    'sein',
+    'wird',
+    'werden',
+    'wurde',
+    'worden',
+    'zu',
+    'zur',
+    'zum',
+    'im',
+    'in',
+    'an',
+    'auf',
+    'aus',
+    'bei',
+    'mit',
+    'nach',
+    'vor',
+    'ueber',
+    'unter',
+    'durch',
+    'fuer',
+    'gegen',
+    'ohne',
+    'um',
+    'muss',
+    'muessen',
+    'soll',
+    'sollen',
+    'kann',
+    'koennen',
+    'darf',
+    'duerfen',
+    'sollte',
+    'sollten',
+    'es',
+    'er',
+    'sie',
+    'wir',
+    'man',
+    'auch',
+    'nur',
+    'noch',
+    'schon',
+    'alle',
+    'aller',
+    'allen',
+    'jede',
+    'jeder',
+    'jedes',
+    'nicht',
+    'kein',
+    'keine',
+    'als',
+    'wie',
+    'wenn',
+    'dann',
+    'sowohl',
+    'bzw',
 }
 
 
 def _query_terms(query: str) -> List[str]:
     terms = []
-    for tok in re.split(r"\s+", _fold(query)):
-        tok = re.sub(r"^\W+|\W+$", "", tok)  # Rand-Satzzeichen weg, interne Punkte (z. B. "net.1") behalten
+    for tok in re.split(r'\s+', _fold(query)):
+        tok = re.sub(r'^\W+|\W+$', '', tok)  # Rand-Satzzeichen weg, interne Punkte (z. B. "net.1") behalten
         if len(tok) >= 2 and tok not in _STOPWORDS:
             terms.append(tok)
     return terms
@@ -235,8 +303,8 @@ def _query_terms(query: str) -> List[str]:
 def _score_record(record: Dict[str, Any], terms: List[str]) -> int:
     """+3 pro Term im Titel/Control-ID, sonst +1 im gesamten Suchtext."""
     score = 0
-    title = record.get("_titel_fold", "")
-    body = record.get("_such_text", "")
+    title = record.get('_titel_fold', '')
+    body = record.get('_such_text', '')
     for term in terms:
         if term in title:
             score += 3
@@ -247,27 +315,29 @@ def _score_record(record: Dict[str, Any], terms: List[str]) -> int:
 
 class Tools:
     class Valves(BaseModel):
-        branch: str = Field(default="main", description="Git-Branch/Ref der BSI-Bibliothek.")
-        referenz_ziel: str = Field(default="viewer", description="Ziel der referenz_url: 'viewer' (Stand-der-Technik-Viewer, Katalog per Deep-Link geladen) oder 'github' (Roh-JSON auf GitHub).")
-        viewer_base_url: str = Field(default=VIEWER_BASE, description="Basis-URL des Stand-der-Technik-Viewers (mit abschliessendem Slash).")
+        branch: str = Field(default='main', description='Git-Branch/Ref der BSI-Bibliothek.')
+        referenz_ziel: str = Field(default='viewer', description="Ziel der referenz_url: 'viewer' (Stand-der-Technik-Viewer, Katalog per Deep-Link geladen) oder 'github' (Roh-JSON auf GitHub).")
+        viewer_base_url: str = Field(default=VIEWER_BASE, description='Basis-URL des Stand-der-Technik-Viewers (mit abschliessendem Slash).')
         etag_check_interval_seconds: int = Field(
-            default=600, ge=0, le=86400,
-            description="Mindestabstand, bevor ein gecachter Katalog erneut per ETag geprueft wird. 0 = immer pruefen.",
+            default=600,
+            ge=0,
+            le=86400,
+            description='Mindestabstand, bevor ein gecachter Katalog erneut per ETag geprueft wird. 0 = immer pruefen.',
         )
-        timeout_seconds: int = Field(default=30, ge=1, le=120, description="HTTP-Timeout in Sekunden.")
-        min_request_interval: float = Field(default=0.5, ge=0.0, le=10.0, description="Mindestabstand zwischen Requests.")
-        max_response_bytes: int = Field(default=30_000_000, ge=100_000, le=200_000_000, description="Max. Groesse einer HTTP-Antwort (Grundschutz++ ~5,4 MB).")
-        max_output_chars: int = Field(default=0, ge=0, description="Ausgabelaengenbegrenzung. 0 = unbegrenzt.")
-        max_search_results: int = Field(default=25, ge=1, le=100, description="Globale Obergrenze fuer Suchtreffer.")
-        include_entwurf_default: bool = Field(default=False, description="Ob Entwuerfe/Previews standardmaessig durchsucht werden.")
+        timeout_seconds: int = Field(default=30, ge=1, le=120, description='HTTP-Timeout in Sekunden.')
+        min_request_interval: float = Field(default=0.5, ge=0.0, le=10.0, description='Mindestabstand zwischen Requests.')
+        max_response_bytes: int = Field(default=30_000_000, ge=100_000, le=200_000_000, description='Max. Groesse einer HTTP-Antwort (Grundschutz++ ~5,4 MB).')
+        max_output_chars: int = Field(default=0, ge=0, description='Ausgabelaengenbegrenzung. 0 = unbegrenzt.')
+        max_search_results: int = Field(default=25, ge=1, le=100, description='Globale Obergrenze fuer Suchtreffer.')
+        include_entwurf_default: bool = Field(default=False, description='Ob Entwuerfe/Previews standardmaessig durchsucht werden.')
         starke_treffer_score: int = Field(default=3, ge=1, le=50, description="Ab diesem Score gilt eine Anforderung in pruefe_anforderungen als 'wahrscheinlich_abgedeckt'.")
-        max_anforderungen: int = Field(default=100, ge=1, le=1000, description="Obergrenze der Anforderungen pro pruefe_anforderungen-Aufruf.")
-        debug: bool = Field(default=False, description="Debug-Ausgaben ueber event_emitter.")
+        max_anforderungen: int = Field(default=100, ge=1, le=1000, description='Obergrenze der Anforderungen pro pruefe_anforderungen-Aufruf.')
+        debug: bool = Field(default=False, description='Debug-Ausgaben ueber event_emitter.')
 
     class UserValves(BaseModel):
-        pretty_json: bool = Field(default=True, description="JSON eingerueckt ausgeben.")
-        default_search_limit: int = Field(default=8, ge=1, le=50, description="Standard-Trefferlimit fuer die Suche.")
-        include_entwurf: Optional[bool] = Field(default=None, description="Entwuerfe/Previews mitdurchsuchen (ueberschreibt include_entwurf_default). None = Valve-Default.")
+        pretty_json: bool = Field(default=True, description='JSON eingerueckt ausgeben.')
+        default_search_limit: int = Field(default=8, ge=1, le=50, description='Standard-Trefferlimit fuer die Suche.')
+        include_entwurf: Optional[bool] = Field(default=None, description='Entwuerfe/Previews mitdurchsuchen (ueberschreibt include_entwurf_default). None = Valve-Default.')
 
     def __init__(self) -> None:
         self.valves = self.Valves()
@@ -289,54 +359,51 @@ class Tools:
                 try:
                     with urlopen(request, timeout=self.valves.timeout_seconds) as resp:
                         body = resp.read(self.valves.max_response_bytes + 1)
-                        return resp.status, body, resp.headers.get("ETag")
+                        return resp.status, body, resp.headers.get('ETag')
                 except HTTPError as exc:
                     if exc.code == 304:
-                        return 304, None, request.headers.get("If-none-match")
-                    raise ValueError(f"HTTP {exc.code} bei {request.full_url}: {exc.reason}") from exc
+                        return 304, None, request.headers.get('If-none-match')
+                    raise ValueError(f'HTTP {exc.code} bei {request.full_url}: {exc.reason}') from exc
             finally:
                 self._last_request = time.time()
 
     def _referenz_url(self, path: str) -> str:
         """Zitier-URL fuer einen Katalog-Pfad: Viewer-Deep-Link (Default) oder GitHub-Roh-JSON."""
-        raw_url = f"{RAW_BASE}/{self.valves.branch}/{quote(path)}"
-        if (self.valves.referenz_ziel or "viewer").strip().lower() == "github":
-            return f"{GITHUB_BLOB_BASE}/{self.valves.branch}/{quote(path)}"
+        raw_url = f'{RAW_BASE}/{self.valves.branch}/{quote(path)}'
+        if (self.valves.referenz_ziel or 'viewer').strip().lower() == 'github':
+            return f'{GITHUB_BLOB_BASE}/{self.valves.branch}/{quote(path)}'
         return _viewer_deep_link(self.valves.viewer_base_url or VIEWER_BASE, raw_url)
 
     def _fetch_catalog(self, path: str, prior_etag: Optional[str]) -> Tuple[int, Optional[bytes], Optional[str]]:
-        url = f"{RAW_BASE}/{self.valves.branch}/{quote(path)}"
-        headers = {"User-Agent": "OpenWebUI-BSI-SdT-Tools/1.0", "Accept": "application/json"}
+        url = f'{RAW_BASE}/{self.valves.branch}/{quote(path)}'
+        headers = {'User-Agent': 'OpenWebUI-BSI-SdT-Tools/1.0', 'Accept': 'application/json'}
         if prior_etag:
-            headers["If-None-Match"] = prior_etag
-        return self._open(Request(url, headers=headers, method="GET"))
+            headers['If-None-Match'] = prior_etag
+        return self._open(Request(url, headers=headers, method='GET'))
 
     def _get_catalog_records(self, key: str) -> List[Dict[str, Any]]:
         """Cache-aware: liefert die geparsten Control-Records eines Katalogs."""
         cat = CATALOGS_BY_KEY[key]
         entry = self._cache.get(key)
         now = time.time()
-        if entry and entry.get("records") is not None:
-            if now - entry["checked_at"] < self.valves.etag_check_interval_seconds:
-                return entry["records"]
-        prior_etag = entry.get("etag") if entry else None
+        if entry and entry.get('records') is not None:
+            if now - entry['checked_at'] < self.valves.etag_check_interval_seconds:
+                return entry['records']
+        prior_etag = entry.get('etag') if entry else None
         try:
-            status, body, etag = self._fetch_catalog(cat["path"], prior_etag)
+            status, body, etag = self._fetch_catalog(cat['path'], prior_etag)
         except ValueError:
-            if entry and entry.get("records") is not None:
-                entry["warning"] = "Netzwerkfehler – letzter Cache-Stand verwendet."
-                return entry["records"]
+            if entry and entry.get('records') is not None:
+                entry['warning'] = 'Netzwerkfehler – letzter Cache-Stand verwendet.'
+                return entry['records']
             raise
         if status == 304 and entry is not None:
-            entry["checked_at"] = now
-            return entry["records"]
-        catalog_json = json.loads(body.decode("utf-8"))
-        referenz_url = self._referenz_url(cat["path"])
-        records = [
-            _control_to_record(ctrl, group_path, key, cat["beschreibung"], referenz_url)
-            for ctrl, group_path in _iter_controls(catalog_json)
-        ]
-        self._cache[key] = {"etag": etag, "records": records, "checked_at": now}
+            entry['checked_at'] = now
+            return entry['records']
+        catalog_json = json.loads(body.decode('utf-8'))
+        referenz_url = self._referenz_url(cat['path'])
+        records = [_control_to_record(ctrl, group_path, key, cat['beschreibung'], referenz_url) for ctrl, group_path in _iter_controls(catalog_json)]
+        self._cache[key] = {'etag': etag, 'records': records, 'checked_at': now}
         return records
 
     # ------------------------------------------------------------------ #
@@ -348,16 +415,14 @@ class Tools:
         result = json.dumps(payload, ensure_ascii=False, indent=indent)
         max_chars = int(self.valves.max_output_chars or 0)
         if max_chars > 0 and len(result) > max_chars:
-            return result[:max_chars] + "\n... Ausgabe durch max_output_chars gekuerzt ..."
+            return result[:max_chars] + '\n... Ausgabe durch max_output_chars gekuerzt ...'
         return result
 
     async def _emit_status(self, __event_emitter__, description: str, done: bool) -> None:
         if __event_emitter__ is None:
             return
         try:
-            await __event_emitter__(
-                {"type": "status", "data": {"description": description, "done": done}}
-            )
+            await __event_emitter__({'type': 'status', 'data': {'description': description, 'done': done}})
         except Exception:
             return
 
@@ -367,8 +432,8 @@ class Tools:
         try:
             await __event_emitter__(
                 {
-                    "type": "message",
-                    "data": {"content": "\n```json\n" + json.dumps(payload, ensure_ascii=False, indent=2) + "\n```\n"},
+                    'type': 'message',
+                    'data': {'content': '\n```json\n' + json.dumps(payload, ensure_ascii=False, indent=2) + '\n```\n'},
                 }
             )
         except Exception:
@@ -383,13 +448,10 @@ class Tools:
         Listet die verfuegbaren BSI-Stand-der-Technik-Kataloge mit Kurzbeschreibung und Entwurf-Status.
         :return: JSON mit allen Katalogen (key, beschreibung, entwurf, pfad).
         """
-        await self._emit_status(__event_emitter__, "liste_kataloge", done=False)
-        kataloge = [
-            {"key": c["key"], "beschreibung": c["beschreibung"], "entwurf": c["entwurf"], "pfad": c["path"]}
-            for c in CATALOGS
-        ]
-        await self._emit_status(__event_emitter__, "liste_kataloge abgeschlossen", done=True)
-        return self._to_json({"count": len(kataloge), "kataloge": kataloge, "hinweis": HINWEIS})
+        await self._emit_status(__event_emitter__, 'liste_kataloge', done=False)
+        kataloge = [{'key': c['key'], 'beschreibung': c['beschreibung'], 'entwurf': c['entwurf'], 'pfad': c['path']} for c in CATALOGS]
+        await self._emit_status(__event_emitter__, 'liste_kataloge abgeschlossen', done=True)
+        return self._to_json({'count': len(kataloge), 'kataloge': kataloge, 'hinweis': HINWEIS})
 
     # ------------------------------------------------------------------ #
     #  suche_stand_der_technik                                           #
@@ -399,20 +461,18 @@ class Tools:
         if katalog_filter.strip():
             key = katalog_filter.strip().lower()
             if key not in CATALOGS_BY_KEY:
-                raise ValueError(
-                    f"Unbekannter Katalog '{katalog_filter}'. Verfuegbar: " + ", ".join(CATALOGS_BY_KEY)
-                )
+                raise ValueError(f"Unbekannter Katalog '{katalog_filter}'. Verfuegbar: " + ', '.join(CATALOGS_BY_KEY))
             return [key]
         include_entwurf = preview
         if not preview:
             uv = self.user_valves.include_entwurf
             include_entwurf = uv if uv is not None else self.valves.include_entwurf_default
-        return [c["key"] for c in CATALOGS if include_entwurf or not c["entwurf"]]
+        return [c['key'] for c in CATALOGS if include_entwurf or not c['entwurf']]
 
     async def suche_stand_der_technik(
         self,
         stichworte: str,
-        katalog_filter: str = "",
+        katalog_filter: str = '',
         preview: bool = False,
         limit: Optional[int] = None,
         __event_emitter__=None,
@@ -426,14 +486,14 @@ class Tools:
         :param limit: Optionales Trefferlimit (durch max_search_results begrenzt).
         :return: JSON mit bewerteten Treffern inkl. Anforderungstext und Referenz (referenz_text, referenz_url).
         """
-        query = (str(stichworte) if stichworte is not None else "").strip()
-        await self._emit_status(__event_emitter__, f"Suche: {query or '(leer)'}", done=False)
+        query = (str(stichworte) if stichworte is not None else '').strip()
+        await self._emit_status(__event_emitter__, f'Suche: {query or "(leer)"}', done=False)
         try:
             if not query:
-                raise ValueError("stichworte darf nicht leer sein.")
+                raise ValueError('stichworte darf nicht leer sein.')
             terms = _query_terms(query)
             if not terms:
-                raise ValueError("Bitte mindestens einen Suchbegriff mit >= 2 Zeichen angeben.")
+                raise ValueError('Bitte mindestens einen Suchbegriff mit >= 2 Zeichen angeben.')
             eff_limit = limit if limit is not None else self.user_valves.default_search_limit
             eff_limit = max(1, min(int(eff_limit), self.valves.max_search_results))
             keys = self._select_catalog_keys(katalog_filter, preview)
@@ -450,45 +510,47 @@ class Tools:
                     s = _score_record(rec, terms)
                     if s > 0:
                         scored.append((s, rec))
-            scored.sort(key=lambda t: (-t[0], t[1]["control_id"]))
+            scored.sort(key=lambda t: (-t[0], t[1]['control_id']))
 
             results = []
             for score, rec in scored[:eff_limit]:
-                guidance = rec["guidance"]
+                guidance = rec['guidance']
                 if len(guidance) > 500:
-                    guidance = guidance[:500].rstrip() + " …"
-                results.append({
-                    "control_id": rec["control_id"],
-                    "katalog": rec["katalog"],
-                    "katalog_beschreibung": rec["katalog_beschreibung"],
-                    "gruppe": rec["gruppe"],
-                    "titel": rec["titel"],
-                    "anforderung": rec["anforderung"],
-                    "guidance": guidance or None,
-                    "sec_level": rec["sec_level"],
-                    "effort_level": rec["effort_level"],
-                    "referenz_text": rec["referenz_text"],
-                    "referenz_url": rec["referenz_url"],
-                    "score": score,
-                })
+                    guidance = guidance[:500].rstrip() + ' …'
+                results.append(
+                    {
+                        'control_id': rec['control_id'],
+                        'katalog': rec['katalog'],
+                        'katalog_beschreibung': rec['katalog_beschreibung'],
+                        'gruppe': rec['gruppe'],
+                        'titel': rec['titel'],
+                        'anforderung': rec['anforderung'],
+                        'guidance': guidance or None,
+                        'sec_level': rec['sec_level'],
+                        'effort_level': rec['effort_level'],
+                        'referenz_text': rec['referenz_text'],
+                        'referenz_url': rec['referenz_url'],
+                        'score': score,
+                    }
+                )
             payload = {
-                "stichworte": query,
-                "durchsuchte_kataloge": keys,
-                "preview": bool(preview),
-                "total": len(scored),
-                "count": len(results),
-                "limit": eff_limit,
-                "results": results,
-                "hinweis": HINWEIS,
+                'stichworte': query,
+                'durchsuchte_kataloge': keys,
+                'preview': bool(preview),
+                'total': len(scored),
+                'count': len(results),
+                'limit': eff_limit,
+                'results': results,
+                'hinweis': HINWEIS,
             }
             if warnings:
-                payload["warnings"] = warnings
-            await self._emit_debug(__event_emitter__, {"tool": "suche_stand_der_technik", "count": len(results), "total": len(scored)})
-            await self._emit_status(__event_emitter__, f"Suche abgeschlossen: {len(results)} Treffer", done=True)
+                payload['warnings'] = warnings
+            await self._emit_debug(__event_emitter__, {'tool': 'suche_stand_der_technik', 'count': len(results), 'total': len(scored)})
+            await self._emit_status(__event_emitter__, f'Suche abgeschlossen: {len(results)} Treffer', done=True)
             return self._to_json(payload)
         except Exception as exc:
-            await self._emit_status(__event_emitter__, f"Suche fehlgeschlagen: {exc}", done=True)
-            return self._to_json({"error": str(exc), "tool": "suche_stand_der_technik", "stichworte": stichworte})
+            await self._emit_status(__event_emitter__, f'Suche fehlgeschlagen: {exc}', done=True)
+            return self._to_json({'error': str(exc), 'tool': 'suche_stand_der_technik', 'stichworte': stichworte})
 
     # ------------------------------------------------------------------ #
     #  hole_control                                                      #
@@ -497,7 +559,7 @@ class Tools:
     async def hole_control(
         self,
         control_id: str,
-        katalog: str = "",
+        katalog: str = '',
         __event_emitter__=None,
         __user__: Optional[dict] = None,
     ) -> str:
@@ -507,18 +569,18 @@ class Tools:
         :param katalog: Optionaler Katalog-key zur Eingrenzung; leer = ueber alle Kataloge suchen.
         :return: JSON mit dem vollstaendigen Control-Record inkl. Referenz.
         """
-        cid = (str(control_id) if control_id is not None else "").strip()
-        await self._emit_status(__event_emitter__, f"hole_control: {cid}", done=False)
+        cid = (str(control_id) if control_id is not None else '').strip()
+        await self._emit_status(__event_emitter__, f'hole_control: {cid}', done=False)
         try:
             if not cid:
-                raise ValueError("control_id darf nicht leer sein.")
+                raise ValueError('control_id darf nicht leer sein.')
             if katalog.strip():
                 key = katalog.strip().lower()
                 if key not in CATALOGS_BY_KEY:
                     raise ValueError(f"Unbekannter Katalog '{katalog}'.")
                 keys = [key]
             else:
-                keys = [c["key"] for c in CATALOGS]  # gezielte ID -> auch Entwuerfe
+                keys = [c['key'] for c in CATALOGS]  # gezielte ID -> auch Entwuerfe
             target = _fold(cid)
             for key in keys:
                 try:
@@ -526,15 +588,15 @@ class Tools:
                 except ValueError:
                     continue
                 for rec in records:
-                    if _fold(rec["control_id"]) == target:
-                        payload = {k: v for k, v in rec.items() if not k.startswith("_")}
-                        payload["hinweis"] = HINWEIS
-                        await self._emit_status(__event_emitter__, f"hole_control abgeschlossen: {cid}", done=True)
+                    if _fold(rec['control_id']) == target:
+                        payload = {k: v for k, v in rec.items() if not k.startswith('_')}
+                        payload['hinweis'] = HINWEIS
+                        await self._emit_status(__event_emitter__, f'hole_control abgeschlossen: {cid}', done=True)
                         return self._to_json(payload)
             raise ValueError(f"Control '{control_id}' nicht gefunden.")
         except Exception as exc:
-            await self._emit_status(__event_emitter__, f"hole_control fehlgeschlagen: {exc}", done=True)
-            return self._to_json({"error": str(exc), "tool": "hole_control", "control_id": control_id})
+            await self._emit_status(__event_emitter__, f'hole_control fehlgeschlagen: {exc}', done=True)
+            return self._to_json({'error': str(exc), 'tool': 'hole_control', 'control_id': control_id})
 
     # ------------------------------------------------------------------ #
     #  pruefe_anforderungen (Phase 2: Dokument-/Ausschreibungsabgleich)   #
@@ -546,7 +608,7 @@ class Tools:
         if anforderungen is None:
             return []
         if isinstance(anforderungen, str):
-            roh = re.split(r"[\r\n]+", anforderungen)
+            roh = re.split(r'[\r\n]+', anforderungen)
         elif isinstance(anforderungen, (list, tuple)):
             roh = [str(a) for a in anforderungen]
         else:
@@ -569,15 +631,15 @@ class Tools:
         :param treffer_pro_anforderung: Anzahl der Control-Kandidaten je Anforderung (1-10).
         :return: JSON mit je Anforderung {verdikt, treffer[]} und einer Zusammenfassung.
         """
-        await self._emit_status(__event_emitter__, "pruefe_anforderungen gestartet", done=False)
+        await self._emit_status(__event_emitter__, 'pruefe_anforderungen gestartet', done=False)
         try:
             items = self._normalize_anforderungen(anforderungen)
             if not items:
-                raise ValueError("anforderungen darf nicht leer sein.")
+                raise ValueError('anforderungen darf nicht leer sein.')
             if len(items) > self.valves.max_anforderungen:
-                raise ValueError(f"Zu viele Anforderungen ({len(items)}); Maximum ist {self.valves.max_anforderungen}.")
+                raise ValueError(f'Zu viele Anforderungen ({len(items)}); Maximum ist {self.valves.max_anforderungen}.')
             pro = max(1, min(int(treffer_pro_anforderung), 10))
-            keys = self._select_catalog_keys("", preview)
+            keys = self._select_catalog_keys('', preview)
 
             # Kataloge einmalig laden/cachen; nicht-ladbare mit Warnung ueberspringen.
             catalog_records: List[Dict[str, Any]] = []
@@ -590,52 +652,53 @@ class Tools:
 
             starke = int(self.valves.starke_treffer_score)
             ergebnisse = []
-            summary = {"wahrscheinlich_abgedeckt": 0, "pruefen": 0, "keine_entsprechung": 0}
+            summary = {'wahrscheinlich_abgedeckt': 0, 'pruefen': 0, 'keine_entsprechung': 0}
             for anf in items:
                 terms = _query_terms(anf)
-                scored = sorted(
-                    ((_score_record(r, terms), r) for r in catalog_records),
-                    key=lambda t: (-t[0], t[1]["control_id"]),
-                ) if terms else []
+                scored = (
+                    sorted(
+                        ((_score_record(r, terms), r) for r in catalog_records),
+                        key=lambda t: (-t[0], t[1]['control_id']),
+                    )
+                    if terms
+                    else []
+                )
                 treffer = [
                     {
-                        "control_id": r["control_id"],
-                        "katalog": r["katalog"],
-                        "titel": r["titel"],
-                        "sec_level": r["sec_level"],
-                        "referenz_text": r["referenz_text"],
-                        "referenz_url": r["referenz_url"],
-                        "score": s,
+                        'control_id': r['control_id'],
+                        'katalog': r['katalog'],
+                        'titel': r['titel'],
+                        'sec_level': r['sec_level'],
+                        'referenz_text': r['referenz_text'],
+                        'referenz_url': r['referenz_url'],
+                        'score': s,
                     }
-                    for s, r in scored[:pro] if s > 0
+                    for s, r in scored[:pro]
+                    if s > 0
                 ]
-                best = treffer[0]["score"] if treffer else 0
+                best = treffer[0]['score'] if treffer else 0
                 if best == 0:
-                    verdikt = "keine_entsprechung"
+                    verdikt = 'keine_entsprechung'
                 elif best >= starke:
-                    verdikt = "wahrscheinlich_abgedeckt"
+                    verdikt = 'wahrscheinlich_abgedeckt'
                 else:
-                    verdikt = "pruefen"
+                    verdikt = 'pruefen'
                 summary[verdikt] += 1
-                ergebnisse.append({"anforderung": anf, "verdikt": verdikt, "treffer": treffer})
+                ergebnisse.append({'anforderung': anf, 'verdikt': verdikt, 'treffer': treffer})
 
             payload = {
-                "anzahl_anforderungen": len(items),
-                "durchsuchte_kataloge": keys,
-                "preview": bool(preview),
-                "anforderungen": ergebnisse,
-                "zusammenfassung": summary,
-                "hinweis": (
-                    "Das Verdikt ist eine grobe Keyword-Vorsortierung (Score-basiert), "
-                    "keine verbindliche Abdeckungsaussage. Finale Bewertung durch LLM/Mensch "
-                    "anhand der verlinkten Controls. " + HINWEIS
-                ),
+                'anzahl_anforderungen': len(items),
+                'durchsuchte_kataloge': keys,
+                'preview': bool(preview),
+                'anforderungen': ergebnisse,
+                'zusammenfassung': summary,
+                'hinweis': ('Das Verdikt ist eine grobe Keyword-Vorsortierung (Score-basiert), keine verbindliche Abdeckungsaussage. Finale Bewertung durch LLM/Mensch anhand der verlinkten Controls. ' + HINWEIS),
             }
             if warnings:
-                payload["warnings"] = warnings
-            await self._emit_debug(__event_emitter__, {"tool": "pruefe_anforderungen", "anzahl": len(items), "zusammenfassung": summary})
-            await self._emit_status(__event_emitter__, f"pruefe_anforderungen abgeschlossen: {len(items)} Anforderungen", done=True)
+                payload['warnings'] = warnings
+            await self._emit_debug(__event_emitter__, {'tool': 'pruefe_anforderungen', 'anzahl': len(items), 'zusammenfassung': summary})
+            await self._emit_status(__event_emitter__, f'pruefe_anforderungen abgeschlossen: {len(items)} Anforderungen', done=True)
             return self._to_json(payload)
         except Exception as exc:
-            await self._emit_status(__event_emitter__, f"pruefe_anforderungen fehlgeschlagen: {exc}", done=True)
-            return self._to_json({"error": str(exc), "tool": "pruefe_anforderungen"})
+            await self._emit_status(__event_emitter__, f'pruefe_anforderungen fehlgeschlagen: {exc}', done=True)
+            return self._to_json({'error': str(exc), 'tool': 'pruefe_anforderungen'})

@@ -19,10 +19,7 @@ from urllib.parse import urljoin
 import requests
 from pydantic import BaseModel, Field
 
-DEFAULT_USER_AGENT = (
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 '
-    '(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-)
+DEFAULT_USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
 
 # The e-Vergabe site is a stateful JSF/PrimeFaces application. Its public
 # listing/search is a POST to the search panel's action URL; the keyword is
@@ -95,23 +92,22 @@ def _parse_listing(html_text: str) -> list[dict]:
         if tid in seen:
             continue
         seen.add(tid)
-        cells = [
-            _clean(re.sub(r'<[^>]+>', ' ', c))
-            for c in re.findall(r'<td[^>]*>(.*?)</td>', block, re.S)
-        ]
+        cells = [_clean(re.sub(r'<[^>]+>', ' ', c)) for c in re.findall(r'<td[^>]*>(.*?)</td>', block, re.S)]
         title_link = re.search(r'tenderdetails\.html\?id=\d+"[^>]*>(.*?)</a>', block, re.S)
         title = _clean(title_link.group(1)) if title_link else ''
-        rows.append({
-            'id': tid,
-            'title': title or (cells[0] if cells else ''),
-            'geschaeftszeichen': cells[1] if len(cells) > 1 else '',
-            'vergabestelle': cells[2] if len(cells) > 2 else '',
-            'ort': cells[3] if len(cells) > 3 else '',
-            'verfahrensart': cells[4] if len(cells) > 4 else '',
-            'frist': cells[5] if len(cells) > 5 else '',
-            'veroefflicht': cells[6] if len(cells) > 6 else '',
-            'url': f'https://www.evergabe-online.de/tenderdetails.html?id={tid}',
-        })
+        rows.append(
+            {
+                'id': tid,
+                'title': title or (cells[0] if cells else ''),
+                'geschaeftszeichen': cells[1] if len(cells) > 1 else '',
+                'vergabestelle': cells[2] if len(cells) > 2 else '',
+                'ort': cells[3] if len(cells) > 3 else '',
+                'verfahrensart': cells[4] if len(cells) > 4 else '',
+                'frist': cells[5] if len(cells) > 5 else '',
+                'veroefflicht': cells[6] if len(cells) > 6 else '',
+                'url': f'https://www.evergabe-online.de/tenderdetails.html?id={tid}',
+            }
+        )
     return rows
 
 
@@ -161,10 +157,7 @@ class Tools:
         )
         downloads_dir: str = Field(
             default='',
-            description=(
-                'Directory to save downloaded announcement files into. '
-                'Leave empty to save into a ./tenders folder next to the agent.'
-            ),
+            description=('Directory to save downloaded announcement files into. Leave empty to save into a ./tenders folder next to the agent.'),
         )
 
     def __init__(self):
@@ -197,9 +190,7 @@ class Tools:
         request_headers = {'Origin': self.valves.base_url, 'Referer': f'{self.valves.base_url}/search.html'}
         if headers:
             request_headers.update(headers)
-        response = self._get_session().post(
-            f'{self.valves.base_url}{path}', data=data, headers=request_headers, timeout=45
-        )
+        response = self._get_session().post(f'{self.valves.base_url}{path}', data=data, headers=request_headers, timeout=45)
         response.raise_for_status()
         return response.text
 
@@ -402,10 +393,7 @@ class Tools:
         while len(collected) < limit and scanned < page_cap:
             rows = _parse_listing(html)
             if needle:
-                rows = [
-                    r for r in rows
-                    if needle in r['title'].lower() or needle in r['geschaeftszeichen'].lower()
-                ]
+                rows = [r for r in rows if needle in r['title'].lower() or needle in r['geschaeftszeichen'].lower()]
             collected.extend(rows)
             if len(collected) >= limit:
                 break
@@ -498,11 +486,7 @@ class Tools:
 
         self._emit(__event_emitter__, f'e-Vergabe downloading {kind} of tender {tender_id}', done=False)
 
-        path = (
-            f'/download/Bekanntmachung.xml?id={tender_id}'
-            if kind == 'xml'
-            else f'/Bekanntmachung.pdf?id={tender_id}'
-        )
+        path = f'/download/Bekanntmachung.xml?id={tender_id}' if kind == 'xml' else f'/Bekanntmachung.pdf?id={tender_id}'
         data = self._fetch_bytes(path)
         target_dir = self.valves.downloads_dir.strip() or os.path.join(os.getcwd(), 'tenders')
         os.makedirs(target_dir, exist_ok=True)
@@ -557,12 +541,7 @@ class Tools:
         result = self._fetch_zip_bytes(tender_id, __event_emitter__)
         if result is None:
             return {
-                'error': (
-                    'No ZIP archive could be downloaded for this tender. The '
-                    'tender may have no attached documents, or the evergabe-online.de '
-                    'ZIP command was temporarily unavailable. Use '
-                    'read_tender_on_evergabe_online to inspect the tender, then retry.'
-                ),
+                'error': ('No ZIP archive could be downloaded for this tender. The tender may have no attached documents, or the evergabe-online.de ZIP command was temporarily unavailable. Use read_tender_on_evergabe_online to inspect the tender, then retry.'),
             }
 
         data: bytes = result['data']
@@ -570,10 +549,7 @@ class Tools:
         if not listing:
             self._emit(__event_emitter__, f'e-Vergabe tender {tender_id}: archive was empty or not a valid ZIP')
             return {
-                'error': (
-                    'A file was returned but it is not a valid ZIP archive. '
-                    'The tender may have no attached documents.'
-                ),
+                'error': ('A file was returned but it is not a valid ZIP archive. The tender may have no attached documents.'),
             }
 
         target_dir = self.valves.downloads_dir.strip() or os.path.join(os.getcwd(), 'tenders')

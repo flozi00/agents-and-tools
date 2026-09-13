@@ -88,8 +88,8 @@ class GeoHelpers:
         self.session = requests.Session()
         self.session.headers.update(
             {
-                "User-Agent": "GeocoderScript/1.1 (boris.vanbenthem@oberhausen.de)",
-                "Accept-Language": "de-DE,de;q=0.9,en;q=0.8",
+                'User-Agent': 'GeocoderScript/1.1 (boris.vanbenthem@oberhausen.de)',
+                'Accept-Language': 'de-DE,de;q=0.9,en;q=0.8',
             }
         )
         self._last_call_ts = 0.0
@@ -99,25 +99,25 @@ class GeoHelpers:
 
     @staticmethod
     def _chat_id(__metadata__: Optional[dict]) -> str:
-        return str((__metadata__ or {}).get("chat_id", "__default__"))
+        return str((__metadata__ or {}).get('chat_id', '__default__'))
 
     def _ensure_geo_store(self, __metadata__: Optional[dict]) -> Dict[str, Any]:
         chat_id = self._chat_id(__metadata__)
         store = GeoHelpers._geoStore.get(chat_id) or {}
-        store.setdefault("geojson", {"type": "FeatureCollection", "features": []})
-        store.setdefault("tests", [])
-        store.setdefault("__debug__", False)
+        store.setdefault('geojson', {'type': 'FeatureCollection', 'features': []})
+        store.setdefault('tests', [])
+        store.setdefault('__debug__', False)
         GeoHelpers._geoStore[chat_id] = store
         return store
 
     @staticmethod
     def _fc(geo_store: Dict[str, Any]) -> Dict[str, Any]:
-        return geo_store["geojson"]
+        return geo_store['geojson']
 
     @staticmethod
     def _user_valves(__user__: Optional[dict]) -> Dict[str, Any]:
-        v = ((__user__ or {}).get("valves")) or {}
-        if hasattr(v, "dict"):
+        v = ((__user__ or {}).get('valves')) or {}
+        if hasattr(v, 'dict'):
             try:
                 return v.dict()
             except Exception:
@@ -126,18 +126,12 @@ class GeoHelpers:
 
     def _nominatim_base(self, __user__: Optional[dict]) -> str:
         valves = self._user_valves(__user__)
-        base = (
-            (valves.get("NOMINATIM_BASE_URL") or "https://nominatim.openstreetmap.org")
-            .strip()
-            .rstrip("/")
-        )
-        return base or "https://nominatim.openstreetmap.org"
+        base = (valves.get('NOMINATIM_BASE_URL') or 'https://nominatim.openstreetmap.org').strip().rstrip('/')
+        return base or 'https://nominatim.openstreetmap.org'
 
     def _is_debug(self, __metadata__: Optional[dict], __user__: Optional[dict]) -> bool:
         valves = self._user_valves(__user__)
-        return bool(valves.get("DEBUG_NOTIFICATIONS")) or bool(
-            self._ensure_geo_store(__metadata__).get("__debug__", False)
-        )
+        return bool(valves.get('DEBUG_NOTIFICATIONS')) or bool(self._ensure_geo_store(__metadata__).get('__debug__', False))
 
     def _throttle(self):
         elapsed = time.time() - self._last_call_ts
@@ -148,33 +142,21 @@ class GeoHelpers:
     # ---------- Event Helpers ----------
 
     @staticmethod
-    async def _emit_status(
-        description: str, done: bool, __event_emitter__: EventEmitter
-    ):
+    async def _emit_status(description: str, done: bool, __event_emitter__: EventEmitter):
         if __event_emitter__:
-            await __event_emitter__(
-                {"type": "status", "data": {"description": description, "done": done}}
-            )
+            await __event_emitter__({'type': 'status', 'data': {'description': description, 'done': done}})
 
     @staticmethod
-    async def _emit_notification(
-        title: str, content: str, __event_emitter__: EventEmitter
-    ):
+    async def _emit_notification(title: str, content: str, __event_emitter__: EventEmitter):
         if __event_emitter__:
-            await __event_emitter__(
-                {"type": "notification", "data": {"title": title, "content": content}}
-            )
+            await __event_emitter__({'type': 'notification', 'data': {'title': title, 'content': content}})
 
-    async def _emit_debug_state(
-        self, __metadata__, __user__, stage: str, __event_emitter__
-    ):
+    async def _emit_debug_state(self, __metadata__, __user__, stage: str, __event_emitter__):
         if not self._is_debug(__metadata__, __user__):
             return
         store = self._ensure_geo_store(__metadata__)
         dump = json.dumps(store, ensure_ascii=False, indent=2)
-        await self._emit_notification(
-            f"GeoStore Debug ({stage})", f"```json\n{dump}\n```", __event_emitter__
-        )
+        await self._emit_notification(f'GeoStore Debug ({stage})', f'```json\n{dump}\n```', __event_emitter__)
 
     @staticmethod
     async def _emit_html(
@@ -187,56 +169,51 @@ class GeoHelpers:
 
         await __event_emitter__(
             {
-                "type": "status",
-                "data": {"description": "Bereite HTML-Ausgabe vor...", "done": False},
+                'type': 'status',
+                'data': {'description': 'Bereite HTML-Ausgabe vor...', 'done': False},
             }
         )
         valves = GeoHelpers._user_valves(__user__)
-        delivery = (valves.get("HTML_DELIVERY") or "data_url").strip().lower()
+        delivery = (valves.get('HTML_DELIVERY') or 'data_url').strip().lower()
 
         try:
-            if delivery == "attachment":
+            if delivery == 'attachment':
                 await __event_emitter__(
                     {
-                        "type": "file",
-                        "data": {
-                            "mime_type": "text/html",
-                            "name": "geo_viewer.html",
-                            "content": html,
+                        'type': 'file',
+                        'data': {
+                            'mime_type': 'text/html',
+                            'name': 'geo_viewer.html',
+                            'content': html,
                         },
                     }
                 )
                 await __event_emitter__(
                     {
-                        "type": "message",
-                        "data": {
-                            "content": "Die Karte wurde als **geo_viewer.html** angehängt."
-                        },
+                        'type': 'message',
+                        'data': {'content': 'Die Karte wurde als **geo_viewer.html** angehängt.'},
                     }
                 )
-            elif delivery == "raw":
-                await __event_emitter__({"type": "message", "data": {"content": html}})
-            elif delivery == "codeblock":
+            elif delivery == 'raw':
+                await __event_emitter__({'type': 'message', 'data': {'content': html}})
+            elif delivery == 'codeblock':
                 await __event_emitter__(
                     {
-                        "type": "message",
-                        "data": {"content": "```html\n" + html + "\n```"},
+                        'type': 'message',
+                        'data': {'content': '```html\n' + html + '\n```'},
                     }
                 )
             else:
-                url = "data:text/html;charset=utf-8," + quote(html)
-                text = (
-                    f"[Karte in neuem Tab öffnen]({url})\n\n"
-                    "_Tipp: Bei Problemen HTML_DELIVERY auf `attachment` umstellen._"
-                )
-                await __event_emitter__({"type": "message", "data": {"content": text}})
+                url = 'data:text/html;charset=utf-8,' + quote(html)
+                text = f'[Karte in neuem Tab öffnen]({url})\n\n_Tipp: Bei Problemen HTML_DELIVERY auf `attachment` umstellen._'
+                await __event_emitter__({'type': 'message', 'data': {'content': text}})
         finally:
             await __event_emitter__(
                 {
-                    "type": "status",
-                    "data": {
-                        "description": "HTML-Ausgabe abgeschlossen.",
-                        "done": True,
+                    'type': 'status',
+                    'data': {
+                        'description': 'HTML-Ausgabe abgeschlossen.',
+                        'done': True,
                     },
                 }
             )
@@ -261,19 +238,17 @@ class GeoHelpers:
             if GeoHelpers._point_on_segment(lon, lat, x1, y1, x2, y2):
                 return True
             if (y1 > lat) != (y2 > lat):
-                x_intersect = (x2 - x1) * (lat - y1) / (
-                    (y2 - y1) if (y2 - y1) != 0 else 1e-12
-                ) + x1
+                x_intersect = (x2 - x1) * (lat - y1) / ((y2 - y1) if (y2 - y1) != 0 else 1e-12) + x1
                 if lon < x_intersect:
                     inside = not inside
         return inside
 
     @staticmethod
     def _is_point_in_polygon(point: PointGeom, polygon: PolygonGeom) -> bool:
-        lon, lat = point["coordinates"]
-        geo_type = polygon.get("type")
-        if geo_type == "Polygon":
-            rings = polygon.get("coordinates", [])
+        lon, lat = point['coordinates']
+        geo_type = polygon.get('type')
+        if geo_type == 'Polygon':
+            rings = polygon.get('coordinates', [])
             if not rings:
                 return False
             if not GeoHelpers._ray_casting_in_ring(lon, lat, rings[0]):
@@ -282,19 +257,16 @@ class GeoHelpers:
                 if GeoHelpers._ray_casting_in_ring(lon, lat, hole):
                     return False
             return True
-        if geo_type == "MultiPolygon":
-            for rings in polygon.get("coordinates", []):
+        if geo_type == 'MultiPolygon':
+            for rings in polygon.get('coordinates', []):
                 if not rings:
                     continue
                 if GeoHelpers._ray_casting_in_ring(lon, lat, rings[0]):
-                    in_hole = any(
-                        GeoHelpers._ray_casting_in_ring(lon, lat, hole)
-                        for hole in rings[1:]
-                    )
+                    in_hole = any(GeoHelpers._ray_casting_in_ring(lon, lat, hole) for hole in rings[1:])
                     if not in_hole:
                         return True
             return False
-        raise ValueError(f"Unsupported GeoJSON type: {geo_type}")
+        raise ValueError(f'Unsupported GeoJSON type: {geo_type}')
 
     @staticmethod
     def _haversine_m(lon1: float, lat1: float, lon2: float, lat2: float) -> float:
@@ -303,19 +275,16 @@ class GeoHelpers:
         phi2 = math.radians(lat2)
         dphi = math.radians(lat2 - lat1)
         dlambda = math.radians(lon2 - lon1)
-        a = (
-            math.sin(dphi / 2) ** 2
-            + math.cos(phi1) * math.cos(phi2) * math.sin(dlambda / 2) ** 2
-        )
+        a = math.sin(dphi / 2) ** 2 + math.cos(phi1) * math.cos(phi2) * math.sin(dlambda / 2) ** 2
         c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
         return R * c
 
     @staticmethod
     def _distance_of_point_geoms(p1: PointGeom, p2: PointGeom) -> Dict[str, float]:
-        (lon1, lat1) = p1["coordinates"]
-        (lon2, lat2) = p2["coordinates"]
+        (lon1, lat1) = p1['coordinates']
+        (lon2, lat2) = p2['coordinates']
         meters = GeoHelpers._haversine_m(lon1, lat1, lon2, lat2)
-        return {"meters": meters, "kilometers": meters / 1000.0}
+        return {'meters': meters, 'kilometers': meters / 1000.0}
 
     @staticmethod
     def _try_parse_coord_string(value: str) -> Optional[List[float]]:
@@ -326,8 +295,8 @@ class GeoHelpers:
           - Sind beide <= 90 → übliches "lat, lon" → drehen auf [lon, lat].
         Rückgabe: [lon, lat]
         """
-        s = value.strip().replace(";", ",")
-        parts = [p for p in re.split(r"[,\s]+", s) if p]
+        s = value.strip().replace(';', ',')
+        parts = [p for p in re.split(r'[,\s]+', s) if p]
         if len(parts) != 2:
             return None
         try:
@@ -348,41 +317,33 @@ class GeoHelpers:
     def _last_feature_of_type(gs: JsonDict, geom_types: Union[str, List[str]]) -> Optional[JsonDict]:
         if isinstance(geom_types, str):
             geom_types = [geom_types]
-        for feat in reversed(gs["geojson"]["features"]):
-            if feat.get("geometry", {}).get("type") in geom_types:
+        for feat in reversed(gs['geojson']['features']):
+            if feat.get('geometry', {}).get('type') in geom_types:
                 return feat
         return None
 
     @staticmethod
     def _last_point_geometry(gs: JsonDict) -> Optional[PointGeom]:
-        feat = GeoHelpers._last_feature_of_type(gs, "Point")
-        return feat["geometry"] if feat else None
+        feat = GeoHelpers._last_feature_of_type(gs, 'Point')
+        return feat['geometry'] if feat else None
 
     @staticmethod
     def _last_boundary_geometry(gs: JsonDict) -> Optional[PolygonGeom]:
-        feat = GeoHelpers._last_feature_of_type(gs, ["Polygon", "MultiPolygon"])
-        return feat["geometry"] if feat else None
+        feat = GeoHelpers._last_feature_of_type(gs, ['Polygon', 'MultiPolygon'])
+        return feat['geometry'] if feat else None
 
-    def _point_from_store_index(
-        self, idx: int, __metadata__: Optional[dict]
-    ) -> Optional[PointGeom]:
+    def _point_from_store_index(self, idx: int, __metadata__: Optional[dict]) -> Optional[PointGeom]:
         gs = self._ensure_geo_store(__metadata__)
-        pts = [
-            f["geometry"]
-            for f in gs["geojson"]["features"]
-            if f.get("geometry", {}).get("type") == "Point"
-        ]
+        pts = [f['geometry'] for f in gs['geojson']['features'] if f.get('geometry', {}).get('type') == 'Point']
         try:
             return pts[idx]
         except Exception:
             return None
 
-    def _nominatim_search(
-        self, base: str, params: Dict[str, Any], timeout: int = 30
-    ) -> Optional[List[Dict[str, Any]]]:
+    def _nominatim_search(self, base: str, params: Dict[str, Any], timeout: int = 30) -> Optional[List[Dict[str, Any]]]:
         self._throttle()
         try:
-            resp = self.session.get(f"{base}/search", params=params, timeout=timeout)
+            resp = self.session.get(f'{base}/search', params=params, timeout=timeout)
             resp.raise_for_status()
             return resp.json()
         except Exception:
@@ -393,23 +354,19 @@ class GeoHelpers:
         cache_key = (base, q.strip().lower())
         if cache_key in GeoHelpers._geocode_cache:
             return GeoHelpers._geocode_cache[cache_key]
-        data = self._nominatim_search(
-            base, {"q": q, "format": "json", "limit": 1}, timeout=15
-        )
+        data = self._nominatim_search(base, {'q': q, 'format': 'json', 'limit': 1}, timeout=15)
         if not data:
             return None
         try:
-            lat = float(data[0]["lat"])
-            lon = float(data[0]["lon"])
+            lat = float(data[0]['lat'])
+            lon = float(data[0]['lon'])
         except Exception:
             return None
-        point = {"type": "Point", "coordinates": [lon, lat]}
+        point = {'type': 'Point', 'coordinates': [lon, lat]}
         GeoHelpers._geocode_cache[cache_key] = point
         return point
 
-    async def _fetch_boundary(
-        self, q: str, __user__: Optional[dict]
-    ) -> Optional[PolygonGeom]:
+    async def _fetch_boundary(self, q: str, __user__: Optional[dict]) -> Optional[PolygonGeom]:
         base = self._nominatim_base(__user__)
         cache_key = (base, q.strip().lower())
         if cache_key in GeoHelpers._boundary_cache:
@@ -417,45 +374,41 @@ class GeoHelpers:
         data = self._nominatim_search(
             base,
             {
-                "q": q,
-                "format": "json",
-                "polygon_geojson": 1,
-                "polygon_threshold": 0.001,
-                "limit": 1,
-                "addressdetails": 0,
+                'q': q,
+                'format': 'json',
+                'polygon_geojson': 1,
+                'polygon_threshold': 0.001,
+                'limit': 1,
+                'addressdetails': 0,
             },
             timeout=30,
         )
         if not data:
             return None
-        gj = data[0].get("geojson")
-        if not gj or gj.get("type") not in ("Polygon", "MultiPolygon"):
+        gj = data[0].get('geojson')
+        if not gj or gj.get('type') not in ('Polygon', 'MultiPolygon'):
             return None
         GeoHelpers._boundary_cache[cache_key] = gj
         return gj
 
-    def _add_point_feature(
-        self, gs: JsonDict, lon: float, lat: float, address: Optional[str] = None
-    ) -> JsonDict:
+    def _add_point_feature(self, gs: JsonDict, lon: float, lat: float, address: Optional[str] = None) -> JsonDict:
         feat = {
-            "type": "Feature",
-            "geometry": {"type": "Point", "coordinates": [float(lon), float(lat)]},
-            "properties": {"kind": "point"},
+            'type': 'Feature',
+            'geometry': {'type': 'Point', 'coordinates': [float(lon), float(lat)]},
+            'properties': {'kind': 'point'},
         }
         if address:
-            feat["properties"]["address"] = address
-        self._fc(gs)["features"].append(feat)
+            feat['properties']['address'] = address
+        self._fc(gs)['features'].append(feat)
         return feat
 
-    def _add_boundary_feature(
-        self, gs: JsonDict, geometry: PolygonGeom, label: str
-    ) -> JsonDict:
+    def _add_boundary_feature(self, gs: JsonDict, geometry: PolygonGeom, label: str) -> JsonDict:
         feat = {
-            "type": "Feature",
-            "geometry": geometry,
-            "properties": {"kind": "boundary", "label": label},
+            'type': 'Feature',
+            'geometry': geometry,
+            'properties': {'kind': 'boundary', 'label': label},
         }
-        self._fc(gs)["features"].append(feat)
+        self._fc(gs)['features'].append(feat)
         return feat
 
 
@@ -478,25 +431,25 @@ class Tools:
     # --- Valves / UserValves (für OpenWebUI) ---
     class Valves(BaseModel):
         NOMINATIM_BASE_URL: str = Field(
-            default="https://nominatim.openstreetmap.org",
-            description="Basis-URL für Nominatim (ohne abschließenden Slash).",
+            default='https://nominatim.openstreetmap.org',
+            description='Basis-URL für Nominatim (ohne abschließenden Slash).',
         )
         NOMINATIM_USER_AGENT: str = Field(
-            default="GeocoderScript/1.1 (your-mail@city.de)",
-            description="User Agent für OSM Nominatim Abfrage.",
+            default='GeocoderScript/1.1 (your-mail@city.de)',
+            description='User Agent für OSM Nominatim Abfrage.',
         )
 
     class UserValves(BaseModel):
         DEBUG_NOTIFICATIONS: bool = Field(
             default=False,
-            description="Wenn aktiv, werden vor/nach jedem Funktionsaufruf GeoStore-Dumps gesendet.",
+            description='Wenn aktiv, werden vor/nach jedem Funktionsaufruf GeoStore-Dumps gesendet.',
         )
         NOMINATIM_BASE_URL: str = Field(
-            default="https://nominatim.openstreetmap.org",
-            description="Basis-URL für Nominatim (ohne abschließenden Slash).",
+            default='https://nominatim.openstreetmap.org',
+            description='Basis-URL für Nominatim (ohne abschließenden Slash).',
         )
         HTML_DELIVERY: str = Field(
-            default="data_url",
+            default='data_url',
             description="Wie HTML ausgegeben wird: 'data_url' | 'attachment' | 'codeblock' | 'raw'",
         )
 
@@ -510,17 +463,17 @@ class Tools:
         __metadata__: Optional[dict] = None,
         __event_emitter__: EventEmitter = None,
     ) -> Dict[str, Any]:
-        await self.geo._emit_status("Aufruf: set_debug", False, __event_emitter__)
+        await self.geo._emit_status('Aufruf: set_debug', False, __event_emitter__)
         store = self.geo._ensure_geo_store(__metadata__)
-        store["__debug__"] = bool(enabled)
+        store['__debug__'] = bool(enabled)
         await self.geo._emit_notification(
-            "Debugging umgeschaltet",
-            f"Debugging ist jetzt {'AKTIV' if store['__debug__'] else 'INAKTIV'}.",
+            'Debugging umgeschaltet',
+            f'Debugging ist jetzt {"AKTIV" if store["__debug__"] else "INAKTIV"}.',
             __event_emitter__,
         )
-        await self.geo._emit_debug_state(__metadata__, __user__, "post", __event_emitter__)
-        await self.geo._emit_status("Abgeschlossen: set_debug", True, __event_emitter__)
-        return {"debug": store["__debug__"]}
+        await self.geo._emit_debug_state(__metadata__, __user__, 'post', __event_emitter__)
+        await self.geo._emit_status('Abgeschlossen: set_debug', True, __event_emitter__)
+        return {'debug': store['__debug__']}
 
     async def add_points(
         self,
@@ -540,8 +493,8 @@ class Tools:
         Nimmt 1..n Items (Adresse | GeoJSON-Point | [lon,lat] | Koord-String | Index) und
         speichert sie als Point-Features. Liefert deren Geometrien + Indizes zurück.
         """
-        await self.geo._emit_status("Aufruf: add_points", False, __event_emitter__)
-        await self.geo._emit_debug_state(__metadata__, __user__, "pre", __event_emitter__)
+        await self.geo._emit_status('Aufruf: add_points', False, __event_emitter__)
+        await self.geo._emit_debug_state(__metadata__, __user__, 'pre', __event_emitter__)
         gs = self.geo._ensure_geo_store(__metadata__)
         if not isinstance(items, list):
             items = [items]
@@ -555,36 +508,31 @@ class Tools:
             # Index?
             if isinstance(v, int):
                 geom = self.geo._point_from_store_index(v, __metadata__)
-                label = f"index:{v}"
-            elif isinstance(v, str) and re.fullmatch(r"#?-?\d+", v.strip()):
+                label = f'index:{v}'
+            elif isinstance(v, str) and re.fullmatch(r'#?-?\d+', v.strip()):
                 try:
-                    idx = int(v[1:]) if v.startswith("#") else int(v)
+                    idx = int(v[1:]) if v.startswith('#') else int(v)
                     geom = self.geo._point_from_store_index(idx, __metadata__)
-                    label = f"index:{idx}"
+                    label = f'index:{idx}'
                 except Exception:
                     geom = None
 
             # GeoJSON Point?
-            if (
-                geom is None
-                and isinstance(v, dict)
-                and v.get("type") == "Point"
-                and "coordinates" in v
-            ):
+            if geom is None and isinstance(v, dict) and v.get('type') == 'Point' and 'coordinates' in v:
                 try:
-                    lon, lat = float(v["coordinates"][0]), float(v["coordinates"][1])
+                    lon, lat = float(v['coordinates'][0]), float(v['coordinates'][1])
                 except Exception:
                     lon = lat = None
                 if lon is not None and lat is not None:
-                    geom = {"type": "Point", "coordinates": [lon, lat]}
-                    label = "geojson"
+                    geom = {'type': 'Point', 'coordinates': [lon, lat]}
+                    label = 'geojson'
 
             # [lon,lat] | (lon,lat)?
             if geom is None and isinstance(v, (list, tuple)) and len(v) == 2:
                 try:
                     lon, lat = float(v[0]), float(v[1])
-                    geom = {"type": "Point", "coordinates": [lon, lat]}
-                    label = "coords"
+                    geom = {'type': 'Point', 'coordinates': [lon, lat]}
+                    label = 'coords'
                 except Exception:
                     pass
 
@@ -593,8 +541,8 @@ class Tools:
                 coords = GeoHelpers._try_parse_coord_string(v)
                 if coords:
                     lon, lat = coords
-                    geom = {"type": "Point", "coordinates": [lon, lat]}
-                    label = f"coords:{lon:.6f},{lat:.6f}"
+                    geom = {'type': 'Point', 'coordinates': [lon, lat]}
+                    label = f'coords:{lon:.6f},{lat:.6f}'
 
             # Adresse?
             if geom is None and isinstance(v, str):
@@ -604,35 +552,25 @@ class Tools:
                     label = v
 
             if not geom:
-                results.append(
-                    {"input": v, "error": "Punkt konnte nicht bestimmt werden."}
-                )
+                results.append({'input': v, 'error': 'Punkt konnte nicht bestimmt werden.'})
                 continue
 
             # Speichern
-            feat = self.geo._add_point_feature(
-                gs, geom["coordinates"][0], geom["coordinates"][1], address=label
-            )
-            results.append(
-                {"input": v, "point": feat["geometry"], "index": None}
-            )  # Index optional
+            feat = self.geo._add_point_feature(gs, geom['coordinates'][0], geom['coordinates'][1], address=label)
+            results.append({'input': v, 'point': feat['geometry'], 'index': None})  # Index optional
 
         # Indizes nachträglich befüllen (Positionen der zuletzt hinzugefügten Punkte)
-        all_pts = [
-            f
-            for f in gs["geojson"]["features"]
-            if f.get("geometry", {}).get("type") == "Point"
-        ]
+        all_pts = [f for f in gs['geojson']['features'] if f.get('geometry', {}).get('type') == 'Point']
         for r in reversed(results):
-            if "point" in r:
+            if 'point' in r:
                 for i in range(len(all_pts) - 1, -1, -1):
-                    if all_pts[i]["geometry"] == r["point"] and r.get("index") is None:
-                        r["index"] = i
+                    if all_pts[i]['geometry'] == r['point'] and r.get('index') is None:
+                        r['index'] = i
                         break
 
-        out = {"count": len(results), "results": results}
-        await self.geo._emit_debug_state(__metadata__, __user__, "post", __event_emitter__)
-        await self.geo._emit_status("Abgeschlossen: add_points", True, __event_emitter__)
+        out = {'count': len(results), 'results': results}
+        await self.geo._emit_debug_state(__metadata__, __user__, 'post', __event_emitter__)
+        await self.geo._emit_status('Abgeschlossen: add_points', True, __event_emitter__)
         return out
 
     async def set_boundary(
@@ -647,8 +585,8 @@ class Tools:
         - Wenn boundary_for angegeben, via Nominatim laden und speichern.
         - Sonst: letzte gespeicherte Boundary verwenden.
         """
-        await self.geo._emit_status("Aufruf: set_boundary", False, __event_emitter__)
-        await self.geo._emit_debug_state(__metadata__, __user__, "pre", __event_emitter__)
+        await self.geo._emit_status('Aufruf: set_boundary', False, __event_emitter__)
+        await self.geo._emit_debug_state(__metadata__, __user__, 'pre', __event_emitter__)
 
         gs = self.geo._ensure_geo_store(__metadata__)
 
@@ -656,21 +594,21 @@ class Tools:
             poly = await self.geo._fetch_boundary(boundary_for, __user__)
             if not poly:
                 out = {
-                    "error": "Kein gültiges Boundary-Polygon gefunden.",
-                    "requested": boundary_for,
+                    'error': 'Kein gültiges Boundary-Polygon gefunden.',
+                    'requested': boundary_for,
                 }
             else:
                 self.geo._add_boundary_feature(gs, poly, label=boundary_for)
-                out = {"boundary_for": boundary_for, "geojson": poly}
+                out = {'boundary_for': boundary_for, 'geojson': poly}
         else:
             poly = GeoHelpers._last_boundary_geometry(gs)
             if not poly:
-                out = {"error": "Keine Boundary im GeoStore vorhanden."}
+                out = {'error': 'Keine Boundary im GeoStore vorhanden.'}
             else:
-                out = {"boundary_for": None, "geojson": poly}
+                out = {'boundary_for': None, 'geojson': poly}
 
-        await self.geo._emit_debug_state(__metadata__, __user__, "post", __event_emitter__)
-        await self.geo._emit_status("Abgeschlossen: set_boundary", True, __event_emitter__)
+        await self.geo._emit_debug_state(__metadata__, __user__, 'post', __event_emitter__)
+        await self.geo._emit_status('Abgeschlossen: set_boundary', True, __event_emitter__)
         return out
 
     async def within(
@@ -696,94 +634,80 @@ class Tools:
         - boundary_for None -> letzte gespeicherte Boundary verwenden.
         Speichert jeden Test in gs["tests"].
         """
-        await self.geo._emit_status("Aufruf: within", False, __event_emitter__)
-        await self.geo._emit_debug_state(__metadata__, __user__, "pre", __event_emitter__)
+        await self.geo._emit_status('Aufruf: within', False, __event_emitter__)
+        await self.geo._emit_debug_state(__metadata__, __user__, 'pre', __event_emitter__)
 
         gs = self.geo._ensure_geo_store(__metadata__)
 
         # Boundary sicherstellen
-        ensured = await self.set_boundary(
-            boundary_for, __user__, __metadata__, __event_emitter__=None
-        )
-        if ensured.get("error"):
-            out = {"error": f"Boundary-Fehler: {ensured['error']}"}
-            await self.geo._emit_debug_state(
-                __metadata__, __user__, "post", __event_emitter__
-            )
-            await self.geo._emit_status("Abgeschlossen: within", True, __event_emitter__)
+        ensured = await self.set_boundary(boundary_for, __user__, __metadata__, __event_emitter__=None)
+        if ensured.get('error'):
+            out = {'error': f'Boundary-Fehler: {ensured["error"]}'}
+            await self.geo._emit_debug_state(__metadata__, __user__, 'post', __event_emitter__)
+            await self.geo._emit_status('Abgeschlossen: within', True, __event_emitter__)
             return out
-        polygon_geo = ensured["geojson"]
-        polygon_label = ensured.get("boundary_for")
+        polygon_geo = ensured['geojson']
+        polygon_label = ensured.get('boundary_for')
 
         # Punkte bestimmen
         selected: List[PointGeom] = []
         if points is None:
-            feats = gs["geojson"]["features"]
-            selected = [
-                f["geometry"]
-                for f in feats
-                if f.get("geometry", {}).get("type") == "Point"
-            ]
+            feats = gs['geojson']['features']
+            selected = [f['geometry'] for f in feats if f.get('geometry', {}).get('type') == 'Point']
             if not selected:
-                out = {"error": "Keine Punkte im GeoStore vorhanden."}
-                await self.geo._emit_debug_state(
-                    __metadata__, __user__, "post", __event_emitter__
-                )
-                await self.geo._emit_status(
-                    "Abgeschlossen: within", True, __event_emitter__
-                )
+                out = {'error': 'Keine Punkte im GeoStore vorhanden.'}
+                await self.geo._emit_debug_state(__metadata__, __user__, 'post', __event_emitter__)
+                await self.geo._emit_status('Abgeschlossen: within', True, __event_emitter__)
                 return out
         else:
-            added = await self.add_points(
-                points, __user__, __metadata__, __event_emitter__=None
-            )
+            added = await self.add_points(points, __user__, __metadata__, __event_emitter__=None)
             # nur erfolgreich hinzugefügte Punkte verwenden (auch Indizes ermittelt)
-            for r in added["results"]:
-                if "point" in r:
-                    selected.append(r["point"])
+            for r in added['results']:
+                if 'point' in r:
+                    selected.append(r['point'])
 
         # Prüfung & Persist
         results: List[JsonDict] = []
-        feats = gs["geojson"]["features"]
-        point_feats = [f for f in feats if f.get("geometry", {}).get("type") == "Point"]
+        feats = gs['geojson']['features']
+        point_feats = [f for f in feats if f.get('geometry', {}).get('type') == 'Point']
 
         def address_of_point(p: PointGeom) -> Optional[str]:
             # Suche die Feature-Properties des zugehörigen Punktes (für Label im Popup)
             for f in reversed(point_feats):
-                if f.get("geometry") == p:
-                    props = f.get("properties", {}) or {}
-                    return props.get("address") or props.get("label")
+                if f.get('geometry') == p:
+                    props = f.get('properties', {}) or {}
+                    return props.get('address') or props.get('label')
             return None
 
         for p in selected:
             try:
                 inside = GeoHelpers._is_point_in_polygon(p, polygon_geo)
                 addr = address_of_point(p)
-                item = {"inside": inside, "point": p}
+                item = {'inside': inside, 'point': p}
                 if addr:
-                    item["address"] = addr
+                    item['address'] = addr
                 if polygon_label:
-                    item["boundary_for"] = polygon_label
+                    item['boundary_for'] = polygon_label
                 results.append(item)
-                gs["tests"].append(item.copy())
+                gs['tests'].append(item.copy())
             except Exception as e:
                 addr = address_of_point(p)
                 item = {
-                    "inside": False,
-                    "point": p,
-                    "error": f"Fehler bei Prüfung: {e}",
+                    'inside': False,
+                    'point': p,
+                    'error': f'Fehler bei Prüfung: {e}',
                 }
                 if addr:
-                    item["address"] = addr
+                    item['address'] = addr
                 if polygon_label:
-                    item["boundary_for"] = polygon_label
+                    item['boundary_for'] = polygon_label
                 results.append(item)
-                gs["tests"].append(item.copy())
+                gs['tests'].append(item.copy())
 
-        out = {"boundary_for": polygon_label, "results": results, "count": len(results)}
+        out = {'boundary_for': polygon_label, 'results': results, 'count': len(results)}
 
-        await self.geo._emit_debug_state(__metadata__, __user__, "post", __event_emitter__)
-        await self.geo._emit_status("Abgeschlossen: within", True, __event_emitter__)
+        await self.geo._emit_debug_state(__metadata__, __user__, 'post', __event_emitter__)
+        await self.geo._emit_status('Abgeschlossen: within', True, __event_emitter__)
         return out
 
     async def distance(
@@ -794,7 +718,7 @@ class Tools:
                 Union[str, int, Tuple[float, float], List[float], Dict[str, Any]],
             ]
         ] = None,
-        mode: str = "pairwise",
+        mode: str = 'pairwise',
         __user__: Optional[dict] = None,
         __metadata__: Optional[dict] = None,
         __event_emitter__: EventEmitter = None,
@@ -805,82 +729,72 @@ class Tools:
         - mode: 'pairwise' | 'path'
         Speichert jede Distanz als Test in gs["tests"].
         """
-        await self.geo._emit_status("Aufruf: distance", False, __event_emitter__)
-        await self.geo._emit_debug_state(__metadata__, __user__, "pre", __event_emitter__)
+        await self.geo._emit_status('Aufruf: distance', False, __event_emitter__)
+        await self.geo._emit_debug_state(__metadata__, __user__, 'pre', __event_emitter__)
         gs = self.geo._ensure_geo_store(__metadata__)
 
         # Punkte bestimmen
         resolved: List[PointGeom] = []
         if points is None:
-            feats = gs["geojson"]["features"]
-            resolved = [
-                f["geometry"]
-                for f in feats
-                if f.get("geometry", {}).get("type") == "Point"
-            ]
+            feats = gs['geojson']['features']
+            resolved = [f['geometry'] for f in feats if f.get('geometry', {}).get('type') == 'Point']
         else:
-            added = await self.add_points(
-                points, __user__, __metadata__, __event_emitter__=None
-            )
-            for r in added["results"]:
-                if "point" in r:
-                    resolved.append(r["point"])
+            added = await self.add_points(points, __user__, __metadata__, __event_emitter__=None)
+            for r in added['results']:
+                if 'point' in r:
+                    resolved.append(r['point'])
 
         if len(resolved) < 2:
-            out = {
-                "error": "Bitte mindestens zwei Punkte bereitstellen oder im GeoStore haben."
-            }
-            await self.geo._emit_debug_state(
-                __metadata__, __user__, "post", __event_emitter__
-            )
-            await self.geo._emit_status("Abgeschlossen: distance", True, __event_emitter__)
+            out = {'error': 'Bitte mindestens zwei Punkte bereitstellen oder im GeoStore haben.'}
+            await self.geo._emit_debug_state(__metadata__, __user__, 'post', __event_emitter__)
+            await self.geo._emit_status('Abgeschlossen: distance', True, __event_emitter__)
             return out
 
-        out: Dict[str, Any] = {"mode": mode, "count_points": len(resolved)}
+        out: Dict[str, Any] = {'mode': mode, 'count_points': len(resolved)}
 
-        if mode == "pairwise":
+        if mode == 'pairwise':
             pairs: List[Dict[str, Any]] = []
             n = len(resolved)
             for i in range(n):
                 for j in range(i + 1, n):
                     dist = GeoHelpers._distance_of_point_geoms(resolved[i], resolved[j])
-                    km = dist["kilometers"]
-                    pairs.append({"pair": [i, j], **dist})
-                    gs["tests"].append(
+                    km = dist['kilometers']
+                    pairs.append({'pair': [i, j], **dist})
+                    gs['tests'].append(
                         {
-                            "type": "distance",
-                            "a": resolved[i],
-                            "b": resolved[j],
+                            'type': 'distance',
+                            'a': resolved[i],
+                            'b': resolved[j],
                             **dist,
-                            "label": f"{km:.3f} km",
+                            'label': f'{km:.3f} km',
                         }
                     )
-            out["pairs"] = pairs
+            out['pairs'] = pairs
 
-        elif mode == "path":
+        elif mode == 'path':
             segs: List[Dict[str, Any]] = []
             total_m = 0.0
             for i in range(len(resolved) - 1):
                 dist = GeoHelpers._distance_of_point_geoms(resolved[i], resolved[i + 1])
-                km = dist["kilometers"]
-                total_m += dist["meters"]
-                segs.append({"segment": [i, i + 1], **dist})
-                gs["tests"].append(
+                km = dist['kilometers']
+                total_m += dist['meters']
+                segs.append({'segment': [i, i + 1], **dist})
+                gs['tests'].append(
                     {
-                        "type": "distance",
-                        "a": resolved[i],
-                        "b": resolved[i + 1],
+                        'type': 'distance',
+                        'a': resolved[i],
+                        'b': resolved[i + 1],
                         **dist,
-                        "label": f"{km:.3f} km",
+                        'label': f'{km:.3f} km',
                     }
                 )
-            out["segments"] = segs
-            out["total"] = {"meters": total_m, "kilometers": total_m / 1000.0}
+            out['segments'] = segs
+            out['total'] = {'meters': total_m, 'kilometers': total_m / 1000.0}
         else:
-            out = {"error": f"Unbekannter mode: {mode}. Erlaubt: 'pairwise'|'path'."}
+            out = {'error': f"Unbekannter mode: {mode}. Erlaubt: 'pairwise'|'path'."}
 
-        await self.geo._emit_debug_state(__metadata__, __user__, "post", __event_emitter__)
-        await self.geo._emit_status("Abgeschlossen: distance", True, __event_emitter__)
+        await self.geo._emit_debug_state(__metadata__, __user__, 'post', __event_emitter__)
+        await self.geo._emit_status('Abgeschlossen: distance', True, __event_emitter__)
         return out
 
     async def render_geodata(
@@ -889,8 +803,8 @@ class Tools:
         __metadata__: Optional[dict] = None,
         __event_emitter__: EventEmitter = None,
     ) -> None:
-        await self.geo._emit_status("Aufruf: render_geodata", False, __event_emitter__)
-        await self.geo._emit_debug_state(__metadata__, __user__, "pre", __event_emitter__)
+        await self.geo._emit_status('Aufruf: render_geodata', False, __event_emitter__)
+        await self.geo._emit_debug_state(__metadata__, __user__, 'pre', __event_emitter__)
 
         gs = self.geo._ensure_geo_store(__metadata__)
         geo_json = json.dumps(gs, ensure_ascii=False)
@@ -991,95 +905,85 @@ class Tools:
 </html>"""
 
         await self.geo._emit_html(html, __user__, __event_emitter__)
-        await self.geo._emit_debug_state(__metadata__, __user__, "post", __event_emitter__)
-        await self.geo._emit_status(
-            "Abgeschlossen: render_geodata", True, __event_emitter__
-        )
+        await self.geo._emit_debug_state(__metadata__, __user__, 'post', __event_emitter__)
+        await self.geo._emit_status('Abgeschlossen: render_geodata', True, __event_emitter__)
 
 
 # --- Minimaler, LLM-freundlicher tool_spec ---
 tool_spec = {
-    "tools": [
+    'tools': [
         {
-            "name": "set_debug",
-            "description": "Schaltet Debugging pro Chat ein/aus. Bei aktivem Debugging wird der aktuelle GeoStore als Notification gesendet.",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "enabled": {
-                        "type": "boolean",
-                        "description": "True = Debug an, False = Debug aus",
+            'name': 'set_debug',
+            'description': 'Schaltet Debugging pro Chat ein/aus. Bei aktivem Debugging wird der aktuelle GeoStore als Notification gesendet.',
+            'parameters': {
+                'type': 'object',
+                'properties': {
+                    'enabled': {
+                        'type': 'boolean',
+                        'description': 'True = Debug an, False = Debug aus',
                     }
                 },
-                "required": ["enabled"],
+                'required': ['enabled'],
             },
         },
         {
-            "name": "add_points",
-            "description": "Fügt 1..n Punkte zum GeoStore hinzu (Adresse, GeoJSON-Point, [lon,lat], Koordinaten-String oder GeoStore-Index '#-1').",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "items": {
-                        "description": "Einzelnes Item oder Liste von Items: Adresse | GeoJSON-Point | [lon,lat] | Koordinaten-String | GeoStore-Index (#-1, 0, -1)."
+            'name': 'add_points',
+            'description': "Fügt 1..n Punkte zum GeoStore hinzu (Adresse, GeoJSON-Point, [lon,lat], Koordinaten-String oder GeoStore-Index '#-1').",
+            'parameters': {
+                'type': 'object',
+                'properties': {'items': {'description': 'Einzelnes Item oder Liste von Items: Adresse | GeoJSON-Point | [lon,lat] | Koordinaten-String | GeoStore-Index (#-1, 0, -1).'}},
+                'required': ['items'],
+            },
+        },
+        {
+            'name': 'set_boundary',
+            'description': 'Setzt/holt die Boundary (Polygon/MultiPolygon). Ohne boundary_for wird die zuletzt gespeicherte Boundary verwendet.',
+            'parameters': {
+                'type': 'object',
+                'properties': {
+                    'boundary_for': {
+                        'type': 'string',
+                        'description': 'Name/Entität (z. B. Stadt), deren Boundary geladen wird. Optional.',
                     }
                 },
-                "required": ["items"],
+                'required': [],
             },
         },
         {
-            "name": "set_boundary",
-            "description": "Setzt/holt die Boundary (Polygon/MultiPolygon). Ohne boundary_for wird die zuletzt gespeicherte Boundary verwendet.",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "boundary_for": {
-                        "type": "string",
-                        "description": "Name/Entität (z. B. Stadt), deren Boundary geladen wird. Optional.",
-                    }
-                },
-                "required": [],
-            },
-        },
-        {
-            "name": "within",
-            "description": "Prüft 1..n Punkt(e) gegen eine Boundary. Ohne Argumente werden alle gespeicherten Punkte gegen die zuletzt gespeicherte Boundary geprüft.",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "points": {
-                        "description": "Optional: Ein Punkt oder Liste von Punkten (Adresse | GeoJSON-Point | [lon,lat] | String | GeoStore-Index)."
-                    },
-                    "boundary_for": {
-                        "type": "string",
-                        "description": "Optional: Boundary-Name; sonst letzte Boundary.",
+            'name': 'within',
+            'description': 'Prüft 1..n Punkt(e) gegen eine Boundary. Ohne Argumente werden alle gespeicherten Punkte gegen die zuletzt gespeicherte Boundary geprüft.',
+            'parameters': {
+                'type': 'object',
+                'properties': {
+                    'points': {'description': 'Optional: Ein Punkt oder Liste von Punkten (Adresse | GeoJSON-Point | [lon,lat] | String | GeoStore-Index).'},
+                    'boundary_for': {
+                        'type': 'string',
+                        'description': 'Optional: Boundary-Name; sonst letzte Boundary.',
                     },
                 },
-                "required": [],
+                'required': [],
             },
         },
         {
-            "name": "distance",
-            "description": "Berechnet Distanzen. Ohne Punkte werden alle gespeicherten Punkte genutzt (>=2).",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "points": {
-                        "description": "Optional: Liste/Einzelpunkt (Adresse | GeoJSON-Point | [lon,lat] | String | GeoStore-Index)."
-                    },
-                    "mode": {
-                        "type": "string",
-                        "enum": ["pairwise", "path"],
-                        "description": "pairwise = alle Paare; path = Summe entlang der Reihenfolge.",
+            'name': 'distance',
+            'description': 'Berechnet Distanzen. Ohne Punkte werden alle gespeicherten Punkte genutzt (>=2).',
+            'parameters': {
+                'type': 'object',
+                'properties': {
+                    'points': {'description': 'Optional: Liste/Einzelpunkt (Adresse | GeoJSON-Point | [lon,lat] | String | GeoStore-Index).'},
+                    'mode': {
+                        'type': 'string',
+                        'enum': ['pairwise', 'path'],
+                        'description': 'pairwise = alle Paare; path = Summe entlang der Reihenfolge.',
                     },
                 },
-                "required": [],
+                'required': [],
             },
         },
         {
-            "name": "render_geodata",
-            "description": "Rendern der Karte mit allen gespeicherten Features und Tests.",
-            "parameters": {"type": "object", "properties": {}, "required": []},
+            'name': 'render_geodata',
+            'description': 'Rendern der Karte mit allen gespeicherten Features und Tests.',
+            'parameters': {'type': 'object', 'properties': {}, 'required': []},
         },
     ]
 }

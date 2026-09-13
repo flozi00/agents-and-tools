@@ -21,6 +21,7 @@ HUB = Path(__file__).resolve().parent.parent
 try:
     import open_webui  # noqa: F401
 except ImportError:
+
     class _Stub(types.ModuleType):
         def __getattr__(self, name):
             return type(name, (), {})
@@ -72,11 +73,7 @@ for tool_file in sorted(HUB.glob('tools/*/tool.py')):
         exec(compile(content, str(tool_file), 'exec'), module.__dict__)
         tools = module.__dict__['Tools']()
 
-        methods = [
-            getattr(tools, name)
-            for name in dir(tools)
-            if not name.startswith('_') and callable(getattr(tools, name)) and not isinstance(getattr(tools, name), type)
-        ]
+        methods = [getattr(tools, name) for name in dir(tools) if not name.startswith('_') and callable(getattr(tools, name)) and not isinstance(getattr(tools, name), type)]
         assert methods, 'Tools exposes no callable methods'
 
         for method in methods:
