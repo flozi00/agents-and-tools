@@ -46,17 +46,44 @@ import base64
 import inspect
 import io
 import json
+import os
 import re
+import time
+import uuid
 import zipfile
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 from urllib.parse import urljoin
 
 import httpx
 from fastapi import Request
+from primeline_dialogue_native import create_session_token
 from pydantic import BaseModel, Field
 
+from open_webui.env import WEBUI_SECRET_KEY
 from open_webui.models.users import Users
-from open_webui.utils.chat import generate_chat_completion
+
+
+def _mint_session_token(user_id: str) -> str:
+    """Short-lived session JWT for calls back into the server's public API.
+
+    Tools execute in the plugin-runner sidecar, which never receives the
+    user's Authorization header, so every internal HTTP call has to mint its
+    own ~60s token (same claims as the old `utils/auth.py::create_token`).
+    """
+    return create_session_token({'id': user_id}, 60.0, WEBUI_SECRET_KEY, str(uuid.uuid4()), time.time())
+
+
+async def _generate_chat_completion(request: Request, form_data: Dict[str, Any], user: Any) -> Dict[str, Any]:
+    """Chat completion via the server's public API (the Python-internal
+    `utils/chat.generate_chat_completion` was removed with the Rust cutover)."""
+    base_url = (os.environ.get('WEBUI_URL') or 'http://localhost:8080').rstrip('/')
+    user_id = user.get('id') if isinstance(user, dict) else getattr(user, 'id', None)
+    headers = {'Authorization': f'Bearer {_mint_session_token(str(user_id))}'}
+    async with httpx.AsyncClient(timeout=httpx.Timeout(120.0), verify=os.environ.get('AIOHTTP_CLIENT_SESSION_SSL', 'True').lower() == 'true') as client:
+        response = await client.post(f'{base_url}/api/chat/completions', headers=headers, json=form_data)
+        if response.status_code >= 400:
+            raise RuntimeError(f'Interner Modellaufruf fehlgeschlagen ({response.status_code}): {response.text[:300]}')
+        return response.json()
 
 
 class Tools:
@@ -830,7 +857,7 @@ class Tools:
         if user is None:
             raise ValueError('OpenWebUI-Benutzer konnte für interne Modellaufrufe nicht geladen werden.')
         llm_body = {'model': model.strip(), 'messages': messages, 'stream': False}
-        result = await generate_chat_completion(request, llm_body, user)
+        result = await _generate_chat_completion(request, llm_body, user)
         return self._extract_llm_text(result).strip()
 
     def _extract_llm_text(self, result: Any) -> str:

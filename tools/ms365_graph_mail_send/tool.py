@@ -5,19 +5,122 @@ author: primeline
 version: 1.0.0
 """
 
+import base64
 import datetime as dt
 import json
+import mimetypes
 import os
+import posixpath
 import re
+import time
+import uuid
 from html import escape
 from urllib.parse import quote
 
 import aiohttp
+from primeline_dialogue_native import create_session_token
 from pydantic import BaseModel, Field
 
 SSL_VERIFY = os.environ.get('AIOHTTP_CLIENT_SESSION_SSL', 'True').lower() == 'true'
 EMAIL_RE = re.compile(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
 GUID_RE = re.compile(r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$')
+
+
+def _mint_session_token(user_id: str) -> str:
+    """Short-lived session JWT for calls back into the server's public API.
+
+    Tools execute in the plugin-runner sidecar, which never receives the
+    user's Authorization header, so every internal HTTP call has to mint its
+    own ~60s token (same claims as the old `utils/auth.py::create_token`).
+    """
+    from open_webui.env import WEBUI_SECRET_KEY
+
+    return create_session_token({'id': user_id}, 60.0, WEBUI_SECRET_KEY, str(uuid.uuid4()), time.time())
+
+
+def _parse_terminal_file_paths(file_paths: str) -> list[str]:
+    return [path.strip() for path in (file_paths or '').split(',') if path.strip()]
+
+
+def _join_terminal_path(cwd: str | None, path: str) -> str:
+    if path.startswith('/'):
+        return posixpath.normpath(path)
+    base = cwd or '/'
+    return posixpath.normpath(posixpath.join(base, path))
+
+
+async def build_agent_vm_attachments(
+    __user__: dict | None,
+    metadata: dict | None,
+    file_paths: str,
+    max_attachment_size_mb: int,
+    timeout_seconds: int,
+) -> list[dict]:
+    """Load Agent-VM files as Graph fileAttachment payloads.
+
+    After the Rust cutover the hub tools run in the plugin-runner sidecar
+    without the host's terminal credentials, so the files are fetched over
+    the server's public API (`/api/v1/terminals/{server_id}/files/*`) with a
+    freshly minted session token. The routes treat every `server_id` as the
+    native Agent-VM; `metadata['terminal_id']` is kept as the path segment.
+    """
+    parsed_paths = _parse_terminal_file_paths(file_paths)
+    if not parsed_paths:
+        return []
+    user_id = (__user__ or {}).get('id') if isinstance(__user__, dict) else None
+    if not user_id:
+        raise ValueError('User context not available')
+
+    server_id = (metadata or {}).get('terminal_id')
+    if not server_id:
+        raise ValueError('Keine aktive Agent-VM Verbindung für Dateianhänge gefunden.')
+    base_url = (os.environ.get('WEBUI_URL') or 'http://localhost:8080').rstrip('/')
+    headers = {'Authorization': f'Bearer {_mint_session_token(str(user_id))}'}
+    timeout = aiohttp.ClientTimeout(total=timeout_seconds, connect=10)
+
+    cwd = None
+    async with aiohttp.ClientSession(timeout=timeout, trust_env=True) as session:
+        async with session.get(f'{base_url}/api/v1/terminals/{server_id}/files/cwd', headers=headers, ssl=SSL_VERIFY) as response:
+            if response.status == 200:
+                data = await response.json()
+                cwd = data.get('cwd') if isinstance(data, dict) else None
+                if not (isinstance(cwd, str) and cwd):
+                    cwd = None
+        max_bytes = max_attachment_size_mb * 1024 * 1024
+        attachments = []
+        for path in parsed_paths:
+            terminal_path = _join_terminal_path(cwd, path)
+            async with session.get(
+                f'{base_url}/api/v1/terminals/{server_id}/files/read',
+                headers=headers,
+                params={'path': terminal_path},
+                ssl=SSL_VERIFY,
+            ) as response:
+                if response.status >= 400:
+                    text = await response.text()
+                    raise RuntimeError(f"Datei '{terminal_path}' konnte nicht vom Terminal geladen werden ({response.status}): {text[:300]}")
+                declared_type = response.headers.get('Content-Type', 'application/octet-stream').split(';')[0].strip()
+                if declared_type == 'application/json':
+                    # `read_file` answers UTF-8 text as {"content": text};
+                    # anything else comes back as raw bytes.
+                    payload = await response.json()
+                    content_bytes = str(payload.get('content') if isinstance(payload, dict) else '').encode('utf-8')
+                else:
+                    content_bytes = await response.read()
+            filename = posixpath.basename(terminal_path.rstrip('/')) or 'attachment'
+            guessed_type = mimetypes.guess_type(filename)[0]
+            content_type = guessed_type or declared_type or 'application/octet-stream'
+            if len(content_bytes) > max_bytes:
+                raise ValueError(f"Datei '{filename}' ist zu groß ({len(content_bytes) / 1024 / 1024:.1f} MB). Maximal {max_attachment_size_mb} MB pro Anhang erlaubt.")
+            attachments.append(
+                {
+                    '@odata.type': '#microsoft.graph.fileAttachment',
+                    'name': filename,
+                    'contentType': content_type,
+                    'contentBytes': base64.b64encode(content_bytes).decode('ascii'),
+                }
+            )
+    return attachments
 
 
 def get_env_value(*keys: str, default: str = '') -> str:
@@ -310,11 +413,9 @@ class Tools:
 
             attachments = []
             if (file_paths or '').strip():
-                # Agent-VM files are fetched by the host app, which owns the terminal auth.
-                from open_webui.tools.builtin import build_agent_vm_attachments
-
+                # Agent-VM files are fetched over the server's public API
+                # with a minted session token (see build_agent_vm_attachments).
                 attachments = await build_agent_vm_attachments(
-                    __request__,
                     __user__,
                     __metadata__,
                     file_paths,

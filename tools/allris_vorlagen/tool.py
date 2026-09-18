@@ -37,8 +37,10 @@ source_url: https://gitlab.opencode.de/kommi/adapter/allris-adapter
 
 import base64
 import json
+import os
 import re
 import time
+import uuid
 from io import BytesIO
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple
@@ -47,14 +49,38 @@ from urllib.parse import unquote, urljoin, urlparse
 import httpx
 from bs4 import BeautifulSoup
 from fastapi import Request
+from primeline_dialogue_native import create_session_token
 from pydantic import BaseModel, Field
 
 try:
+    from open_webui.env import WEBUI_SECRET_KEY
     from open_webui.models.users import Users
-    from open_webui.utils.chat import generate_chat_completion
 except Exception:  # pragma: no cover - OpenWebUI imports are only available at runtime.
     Users = None
-    generate_chat_completion = None
+    WEBUI_SECRET_KEY = ''
+
+
+def _mint_session_token(user_id: str) -> str:
+    """Short-lived session JWT for calls back into the server's public API.
+
+    Tools execute in the plugin-runner sidecar, which never receives the
+    user's Authorization header, so every internal HTTP call has to mint its
+    own ~60s token (same claims as the old `utils/auth.py::create_token`).
+    """
+    return create_session_token({'id': user_id}, 60.0, WEBUI_SECRET_KEY, str(uuid.uuid4()), time.time())
+
+
+async def _generate_chat_completion(request: Request, form_data: Dict[str, Any], user: Any) -> Dict[str, Any]:
+    """Chat completion via the server's public API (the Python-internal
+    `utils/chat.generate_chat_completion` was removed with the Rust cutover)."""
+    base_url = (os.environ.get('WEBUI_URL') or 'http://localhost:8080').rstrip('/')
+    user_id = user.get('id') if isinstance(user, dict) else getattr(user, 'id', None)
+    headers = {'Authorization': f'Bearer {_mint_session_token(str(user_id))}'}
+    async with httpx.AsyncClient(timeout=httpx.Timeout(120.0), verify=os.environ.get('AIOHTTP_CLIENT_SESSION_SSL', 'True').lower() == 'true') as client:
+        response = await client.post(f'{base_url}/api/chat/completions', headers=headers, json=form_data)
+        if response.status_code >= 400:
+            raise RuntimeError(f'Interner Modellaufruf fehlgeschlagen ({response.status_code}): {response.text[:300]}')
+        return response.json()
 
 
 @dataclass
@@ -795,7 +821,7 @@ class Tools:
         user_valves: Optional['Tools.UserValves'],
         events: EventEmitter,
     ) -> str:
-        if not request or not user or not generate_chat_completion or not Users:
+        if not request or not user or not Users:
             return self._fallback_summary(full_text)
 
         user_id = user.get('id') if isinstance(user, dict) else None
@@ -817,7 +843,7 @@ class Tools:
         try:
             await events.status('🧠 Erstelle Zusammenfassung ...')
             await events.debug('Summary Prompt', body, self.valves.debug_mode)
-            response = await generate_chat_completion(request, body, Users.get_user_by_id(user_id))
+            response = await _generate_chat_completion(request, body, {'id': user_id})
             return response.get('choices', [{}])[0].get('message', {}).get('content', '').strip() or self._fallback_summary(full_text)
         except Exception as exc:
             await events.status(f'⚠️ LLM-Zusammenfassung fehlgeschlagen, nutze Kurzextrakt: {type(exc).__name__}')
