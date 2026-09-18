@@ -17,22 +17,34 @@ HUB = Path(__file__).resolve().parent.parent
 
 # Some tools import the host application. Importing it for real would drag in the
 # database and config layers, so outside the app we stand in a stub: this check is
-# about the tool file, not about the host.
+# about the tool file, not about the host. The probe imports `open_webui.env`
+# (what the tools actually need), not bare `open_webui` — a leftover namespace
+# package in a venv makes bare `open_webui` importable while `open_webui.env`
+# still fails, and a real backend on sys.path can raise on missing env config
+# instead of ImportError. Only modules that really exist in the surviving
+# backend may be stubbed: stubbing a module the Rust cutover deleted would hide
+# a dead import.
 try:
-    import open_webui  # noqa: F401
-except ImportError:
+    import open_webui.env  # noqa: F401  # resolved against backend/ when run from the repo root
+except Exception:
 
     class _Stub(types.ModuleType):
         def __getattr__(self, name):
+            # Never answer dunder lookups: the import machinery probes
+            # `__path__` on the parent when resolving a submodule, and a stub
+            # that answers it turns a dead `open_webui.x.y` import into a
+            # confusing TypeError instead of a clean ModuleNotFoundError.
+            if name.startswith('__'):
+                raise AttributeError(name)
             return type(name, (), {})
 
     for module_name in (
         'open_webui',
+        'open_webui.env',
         'open_webui.models',
         'open_webui.models.users',
         'open_webui.models.files',
         'open_webui.utils',
-        'open_webui.utils.chat',
         'open_webui.constants',
     ):
         sys.modules.setdefault(module_name, _Stub(module_name))
@@ -55,6 +67,7 @@ def frontmatter(content: str) -> dict:
 
 
 failures = []
+skipped = []
 for tool_file in sorted(HUB.glob('tools/*/tool.py')):
     tool_id = tool_file.parent.name
     content = tool_file.read_text(encoding='utf-8')
@@ -84,10 +97,23 @@ for tool_file in sorted(HUB.glob('tools/*/tool.py')):
             create_model(method.__name__, **fields).model_json_schema()
 
         print(f'OK   {tool_id:16s} v{front["version"]:8s} {len(methods)} tools  ({front.get("license", "-")})')
+    except ModuleNotFoundError as exc:
+        # Same policy as tests/ci/hub_tool_imports.py: a dead `open_webui.*`
+        # import is a real failure; a missing third-party dep from the tool's
+        # frontmatter `requirements` is a local-env gap (the sidecar pip-installs
+        # them at boot), so it skips with a notice instead of failing the check.
+        if (exc.name or '').startswith('open_webui'):
+            failures.append((tool_id, exc))
+            print(f'FAIL {tool_id:16s} {type(exc).__name__}: {exc}')
+        else:
+            skipped.append(tool_id)
+            print(f'SKIP {tool_id:16s} dep {exc.name} not installed locally')
     except Exception as exc:
         failures.append((tool_id, exc))
         print(f'FAIL {tool_id:16s} {type(exc).__name__}: {exc}')
 
 print()
+if skipped:
+    print(f'{len(skipped)} skipped (missing local deps): {", ".join(skipped)}')
 print(f'{len(failures)} failure(s)')
 sys.exit(1 if failures else 0)
