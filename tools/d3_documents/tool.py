@@ -1,7 +1,7 @@
 """
 title: d.velop d.3 Document Tools
 author: OpenWebUI Function Assistant
-version: 0.1.0
+version: 0.1.1
 requirements: httpx,pydantic,pypdf,python-docx,python-pptx
 description: Durchsucht das Dokumentenmanagement d.velop d.3, liest Dokumente samt Metadaten und extrahiert Text aus PDF-, Word- und PowerPoint-Anhängen.
 license: keine Lizenzangabe im Quellprojekt
@@ -43,44 +43,29 @@ OpenWebUI Function import type: Tools
 from __future__ import annotations
 
 import base64
-import inspect
 import io
 import json
-import os
 import re
-import time
-import uuid
 import zipfile
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 from urllib.parse import urljoin
 
 import httpx
-from fastapi import Request
-from primeline_dialogue_native import create_session_token
 from pydantic import BaseModel, Field
 
-from open_webui.env import WEBUI_SECRET_KEY
-from open_webui.models.users import Users
+# `(__platform_url__, __platform_token__)`: the server's public API and the
+# short-lived token the server issues for this one tool call, acting as the
+# calling user (tool runtime contract, docs/exec-container-design.md §8).
+Platform = Tuple[str, str]
 
 
-def _mint_session_token(user_id: str) -> str:
-    """Short-lived session JWT for calls back into the server's public API.
-
-    Tools execute in the plugin-runner sidecar, which never receives the
-    user's Authorization header, so every internal HTTP call has to mint its
-    own ~60s token (same claims as the old `utils/auth.py::create_token`).
-    """
-    return create_session_token({'id': user_id}, 60.0, WEBUI_SECRET_KEY, str(uuid.uuid4()), time.time())
-
-
-async def _generate_chat_completion(request: Request, form_data: Dict[str, Any], user: Any) -> Dict[str, Any]:
-    """Chat completion via the server's public API (the Python-internal
-    `utils/chat.generate_chat_completion` was removed with the Rust cutover)."""
-    base_url = (os.environ.get('WEBUI_URL') or 'http://localhost:8080').rstrip('/')
-    user_id = user.get('id') if isinstance(user, dict) else getattr(user, 'id', None)
-    headers = {'Authorization': f'Bearer {_mint_session_token(str(user_id))}'}
-    async with httpx.AsyncClient(timeout=httpx.Timeout(120.0), verify=os.environ.get('AIOHTTP_CLIENT_SESSION_SSL', 'True').lower() == 'true') as client:
-        response = await client.post(f'{base_url}/api/chat/completions', headers=headers, json=form_data)
+async def _generate_chat_completion(platform: Platform, form_data: Dict[str, Any]) -> Dict[str, Any]:
+    """Chat completion via the server's public API, as the calling user."""
+    base_url, token = platform
+    headers = {'Authorization': f'Bearer {token}'}
+    # The platform is no egress destination: dial it directly, not via the proxy.
+    async with httpx.AsyncClient(timeout=httpx.Timeout(120.0), trust_env=False) as client:
+        response = await client.post(f'{base_url.rstrip("/")}/api/chat/completions', headers=headers, json=form_data)
         if response.status_code >= 400:
             raise RuntimeError(f'Interner Modellaufruf fehlgeschlagen ({response.status_code}): {response.text[:300]}')
         return response.json()
@@ -220,8 +205,8 @@ class Tools:
         question: str = '',
         includeSummary: bool = False,
         limit: Optional[int] = None,
-        __request__: Optional[Request] = None,
-        __user__: Optional[Dict[str, Any]] = None,
+        __platform_url__: Optional[str] = None,
+        __platform_token__: Optional[str] = None,
         __event_emitter__=None,
     ) -> str:
         """Read an Akte/case file by Aktenzeichen and return document references, optionally with a summary.
@@ -235,10 +220,8 @@ class Tools:
         file_reference = str(fileReference or '').strip()
         if not file_reference:
             return 'Bitte gib ein Aktenzeichen in `fileReference` an.'
-        if includeSummary and __request__ is None:
-            return 'getFileByReference benötigt `__request__`, wenn `includeSummary=True` ist.'
-        if includeSummary and (not isinstance(__user__, dict) or not __user__.get('id')):
-            return 'getFileByReference benötigt einen gültigen OpenWebUI-Benutzerkontext, wenn `includeSummary=True` ist.'
+        if includeSummary and not (__platform_url__ and __platform_token__):
+            return 'getFileByReference benötigt den Plattformzugang des Servers (`__platform_url__`, `__platform_token__`), wenn `includeSummary=True` ist.'
 
         validation_error = self._validate_configuration(require_summary_model=False)
         if validation_error:
@@ -281,8 +264,7 @@ class Tools:
                 file_reference=file_reference,
                 documents=documents,
                 question=question,
-                request=__request__,
-                user_dict=__user__,
+                platform=(__platform_url__, __platform_token__),
             )
 
             if self.valves.EMIT_CITATIONS:
@@ -352,8 +334,8 @@ class Tools:
         self,
         documentRef: str,
         question: str = '',
-        __request__: Optional[Request] = None,
-        __user__: Optional[Dict[str, Any]] = None,
+        __platform_url__: Optional[str] = None,
+        __platform_token__: Optional[str] = None,
         __event_emitter__=None,
     ) -> str:
         """Download a referenced d.3 document and summarize it with the configured OpenWebUI LLM.
@@ -362,10 +344,8 @@ class Tools:
         :param question: Optional user question/focus for the summary.
         :return: A model-generated summary of the downloaded document.
         """
-        if __request__ is None:
-            return 'summarizeDocument benötigt `__request__`, um das konfigurierte OpenWebUI-Sprachmodell aufzurufen.'
-        if not isinstance(__user__, dict) or not __user__.get('id'):
-            return 'summarizeDocument benötigt einen gültigen OpenWebUI-Benutzerkontext.'
+        if not (__platform_url__ and __platform_token__):
+            return 'summarizeDocument benötigt den Plattformzugang des Servers (`__platform_url__`, `__platform_token__`), um das konfigurierte Sprachmodell aufzurufen.'
 
         validation_error = self._validate_configuration(require_summary_model=True)
         if validation_error:
@@ -386,7 +366,7 @@ class Tools:
                 return str(document.get('extraction_note') or 'Das Dokument konnte nicht als Text extrahiert werden.')
 
             await self._emit_status(__event_emitter__, 'Fasse d.3 Dokument mit dem konfigurierten Sprachmodell zusammen ...')
-            summary = await self._summarize_with_llm(document, question, __request__, __user__)
+            summary = await self._summarize_with_llm(document, question, (__platform_url__, __platform_token__))
 
             if self.valves.EMIT_CITATIONS:
                 await self._emit_citation_for_document(__event_emitter__, document, reference, summary)
@@ -483,8 +463,7 @@ class Tools:
         file_reference: str,
         documents: List[Dict[str, Any]],
         question: str,
-        request: Request,
-        user_dict: Dict[str, Any],
+        platform: Platform,
     ) -> str:
         blocks: List[str] = []
         per_document_budget = max(1000, self.valves.MAX_SUMMARY_INPUT_CHARS // max(len(documents), 1))
@@ -514,8 +493,7 @@ class Tools:
         )
         user_prompt = f'Aktenzeichen:\n{file_reference}\n\nAufgabe/Fragestellung:\n{focus}\n\nDokumente der Akte:\n\n' + '\n\n---\n\n'.join(blocks)
         return await self._call_llm(
-            request=request,
-            user_dict=user_dict,
+            platform=platform,
             model=self.valves.FILE_SUMMARY_MODEL,
             messages=[
                 {'role': 'system', 'content': system_prompt},
@@ -818,8 +796,7 @@ class Tools:
         self,
         document: Dict[str, Any],
         question: str,
-        request: Request,
-        user_dict: Dict[str, Any],
+        platform: Platform,
     ) -> str:
         text = str(document.get('text') or '')[: self.valves.MAX_SUMMARY_INPUT_CHARS]
         metadata = {
@@ -836,8 +813,7 @@ class Tools:
         )
         user_prompt = f'Aufgabe/Fragestellung:\n{focus}\n\nDokument-Metadaten:\n{json.dumps(metadata, ensure_ascii=False)}\n\nDokumenttext:\n{text}'
         return await self._call_llm(
-            request=request,
-            user_dict=user_dict,
+            platform=platform,
             model=self.valves.SUMMARY_MODEL,
             messages=[
                 {'role': 'system', 'content': system_prompt},
@@ -847,17 +823,12 @@ class Tools:
 
     async def _call_llm(
         self,
-        request: Request,
-        user_dict: Dict[str, Any],
+        platform: Platform,
         model: str,
         messages: List[Dict[str, str]],
     ) -> str:
-        user_result = Users.get_user_by_id(user_dict['id'])
-        user = await user_result if inspect.isawaitable(user_result) else user_result
-        if user is None:
-            raise ValueError('OpenWebUI-Benutzer konnte für interne Modellaufrufe nicht geladen werden.')
         llm_body = {'model': model.strip(), 'messages': messages, 'stream': False}
-        result = await _generate_chat_completion(request, llm_body, user)
+        result = await _generate_chat_completion(platform, llm_body)
         return self._extract_llm_text(result).strip()
 
     def _extract_llm_text(self, result: Any) -> str:

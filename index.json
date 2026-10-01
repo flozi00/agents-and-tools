@@ -108,7 +108,7 @@
       "id": "allris_vorlagen",
       "name": "ALLRIS Vorlagen Tools",
       "description": "Sucht Vorlagen im Ratsinformationssystem ALLRIS, gibt Beschlussvorschlag, Beratungsfolge und Beschlusstexte im Volltext aus und listet die Anlagen samt PDF-Text auf.",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "requirements": "httpx, beautifulsoup4, pydantic, pypdf"
     },
     {
@@ -127,7 +127,7 @@
       "id": "d3_documents",
       "name": "d.velop d.3 Document Tools",
       "description": "Durchsucht das Dokumentenmanagement d.velop d.3, liest Dokumente samt Metadaten und extrahiert Text aus PDF-, Word- und PowerPoint-Anhängen.",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "requirements": "httpx,pydantic,pypdf,python-docx,python-pptx"
     },
     {
@@ -174,7 +174,7 @@
       "id": "ms365_graph_mail_send",
       "name": "Microsoft 365 Mail (Graph)",
       "description": "Sendet Ergebnisse per Microsoft Graph an die eigene E-Mail-Adresse der angemeldeten Person — optional mit Dateianhängen aus der Agent-VM.",
-      "version": "1.0.0"
+      "version": "1.0.1"
     },
     {
       "id": "niotix_sensors",

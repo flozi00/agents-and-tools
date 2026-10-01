@@ -2,7 +2,7 @@
 title: Microsoft 365 Mail (Graph)
 description: Sendet Ergebnisse per Microsoft Graph an die eigene E-Mail-Adresse der angemeldeten Person — optional mit Dateianhängen aus der Agent-VM.
 author: primeline
-version: 1.0.0
+version: 1.0.1
 """
 
 import base64
@@ -12,30 +12,15 @@ import mimetypes
 import os
 import posixpath
 import re
-import time
-import uuid
 from html import escape
 from urllib.parse import quote
 
 import aiohttp
-from primeline_dialogue_native import create_session_token
 from pydantic import BaseModel, Field
 
 SSL_VERIFY = os.environ.get('AIOHTTP_CLIENT_SESSION_SSL', 'True').lower() == 'true'
 EMAIL_RE = re.compile(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
 GUID_RE = re.compile(r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$')
-
-
-def _mint_session_token(user_id: str) -> str:
-    """Short-lived session JWT for calls back into the server's public API.
-
-    Tools execute in the plugin-runner sidecar, which never receives the
-    user's Authorization header, so every internal HTTP call has to mint its
-    own ~60s token (same claims as the old `utils/auth.py::create_token`).
-    """
-    from open_webui.env import WEBUI_SECRET_KEY
-
-    return create_session_token({'id': user_id}, 60.0, WEBUI_SECRET_KEY, str(uuid.uuid4()), time.time())
 
 
 def _parse_terminal_file_paths(file_paths: str) -> list[str]:
@@ -50,7 +35,8 @@ def _join_terminal_path(cwd: str | None, path: str) -> str:
 
 
 async def build_agent_vm_attachments(
-    __user__: dict | None,
+    platform_url: str | None,
+    platform_token: str | None,
     metadata: dict | None,
     file_paths: str,
     max_attachment_size_mb: int,
@@ -58,28 +44,29 @@ async def build_agent_vm_attachments(
 ) -> list[dict]:
     """Load Agent-VM files as Graph fileAttachment payloads.
 
-    After the Rust cutover the hub tools run in the plugin-runner sidecar
-    without the host's terminal credentials, so the files are fetched over
-    the server's public API (`/api/v1/terminals/{server_id}/files/*`) with a
-    freshly minted session token. The routes treat every `server_id` as the
-    native Agent-VM; `metadata['terminal_id']` is kept as the path segment.
+    The tool runs in the keyless exec container, so the files are fetched
+    over the server's public API (`/api/v1/terminals/{server_id}/files/*`)
+    with the short-lived token the server issues for this tool call
+    (`__platform_url__`, `__platform_token__`; tool runtime contract,
+    docs/exec-container-design.md §8). The routes treat every `server_id` as
+    the native Agent-VM; `metadata['terminal_id']` is kept as the path segment.
     """
     parsed_paths = _parse_terminal_file_paths(file_paths)
     if not parsed_paths:
         return []
-    user_id = (__user__ or {}).get('id') if isinstance(__user__, dict) else None
-    if not user_id:
-        raise ValueError('User context not available')
+    if not platform_url or not platform_token:
+        raise ValueError('Kein Plattformzugang für Dateianhänge (__platform_url__/__platform_token__ fehlen).')
 
     server_id = (metadata or {}).get('terminal_id')
     if not server_id:
         raise ValueError('Keine aktive Agent-VM Verbindung für Dateianhänge gefunden.')
-    base_url = (os.environ.get('WEBUI_URL') or 'http://localhost:8080').rstrip('/')
-    headers = {'Authorization': f'Bearer {_mint_session_token(str(user_id))}'}
+    base_url = platform_url.rstrip('/')
+    headers = {'Authorization': f'Bearer {platform_token}'}
     timeout = aiohttp.ClientTimeout(total=timeout_seconds, connect=10)
 
     cwd = None
-    async with aiohttp.ClientSession(timeout=timeout, trust_env=True) as session:
+    # The platform is no egress destination: dial it directly, not via the proxy.
+    async with aiohttp.ClientSession(timeout=timeout, trust_env=False) as session:
         async with session.get(f'{base_url}/api/v1/terminals/{server_id}/files/cwd', headers=headers, ssl=SSL_VERIFY) as response:
             if response.status == 200:
                 data = await response.json()
@@ -393,6 +380,8 @@ class Tools:
         __request__=None,
         __user__: dict = None,
         __metadata__: dict = None,
+        __platform_url__: str = None,
+        __platform_token__: str = None,
     ) -> str:
         """
         Send results to the current user's own e-mail address with Microsoft Graph.
@@ -414,9 +403,10 @@ class Tools:
             attachments = []
             if (file_paths or '').strip():
                 # Agent-VM files are fetched over the server's public API
-                # with a minted session token (see build_agent_vm_attachments).
+                # with the server-issued tool token (see build_agent_vm_attachments).
                 attachments = await build_agent_vm_attachments(
-                    __user__,
+                    __platform_url__,
+                    __platform_token__,
                     __metadata__,
                     file_paths,
                     config['max_attachment_size_mb'],

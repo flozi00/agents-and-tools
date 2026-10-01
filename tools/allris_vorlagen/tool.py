@@ -2,7 +2,7 @@
 title: ALLRIS Vorlagen Tools
 description: Sucht Vorlagen im Ratsinformationssystem ALLRIS, gibt Beschlussvorschlag, Beratungsfolge und Beschlusstexte im Volltext aus und listet die Anlagen samt PDF-Text auf.
 author: Stadt Oberhausen (Boris van Benthem)
-version: 0.2.0
+version: 0.2.1
 required_open_webui_version: 0.9.5
 requirements: httpx, beautifulsoup4, pydantic, pypdf
 license: keine Lizenzangabe im Quellprojekt
@@ -37,10 +37,8 @@ source_url: https://gitlab.opencode.de/kommi/adapter/allris-adapter
 
 import base64
 import json
-import os
 import re
 import time
-import uuid
 from io import BytesIO
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple
@@ -48,36 +46,17 @@ from urllib.parse import unquote, urljoin, urlparse
 
 import httpx
 from bs4 import BeautifulSoup
-from fastapi import Request
-from primeline_dialogue_native import create_session_token
 from pydantic import BaseModel, Field
 
-try:
-    from open_webui.env import WEBUI_SECRET_KEY
-    from open_webui.models.users import Users
-except Exception:  # pragma: no cover - OpenWebUI imports are only available at runtime.
-    Users = None
-    WEBUI_SECRET_KEY = ''
 
-
-def _mint_session_token(user_id: str) -> str:
-    """Short-lived session JWT for calls back into the server's public API.
-
-    Tools execute in the plugin-runner sidecar, which never receives the
-    user's Authorization header, so every internal HTTP call has to mint its
-    own ~60s token (same claims as the old `utils/auth.py::create_token`).
-    """
-    return create_session_token({'id': user_id}, 60.0, WEBUI_SECRET_KEY, str(uuid.uuid4()), time.time())
-
-
-async def _generate_chat_completion(request: Request, form_data: Dict[str, Any], user: Any) -> Dict[str, Any]:
-    """Chat completion via the server's public API (the Python-internal
-    `utils/chat.generate_chat_completion` was removed with the Rust cutover)."""
-    base_url = (os.environ.get('WEBUI_URL') or 'http://localhost:8080').rstrip('/')
-    user_id = user.get('id') if isinstance(user, dict) else getattr(user, 'id', None)
-    headers = {'Authorization': f'Bearer {_mint_session_token(str(user_id))}'}
-    async with httpx.AsyncClient(timeout=httpx.Timeout(120.0), verify=os.environ.get('AIOHTTP_CLIENT_SESSION_SSL', 'True').lower() == 'true') as client:
-        response = await client.post(f'{base_url}/api/chat/completions', headers=headers, json=form_data)
+async def _generate_chat_completion(platform_url: str, platform_token: str, form_data: Dict[str, Any]) -> Dict[str, Any]:
+    """Chat completion via the server's public API, as the calling user: the
+    server issues `__platform_url__` and the short-lived `__platform_token__`
+    for each tool call (tool runtime contract, docs/exec-container-design.md §8)."""
+    headers = {'Authorization': f'Bearer {platform_token}'}
+    # The platform is no egress destination: dial it directly, not via the proxy.
+    async with httpx.AsyncClient(timeout=httpx.Timeout(120.0), trust_env=False) as client:
+        response = await client.post(f'{platform_url.rstrip("/")}/api/chat/completions', headers=headers, json=form_data)
         if response.status_code >= 400:
             raise RuntimeError(f'Interner Modellaufruf fehlgeschlagen ({response.status_code}): {response.text[:300]}')
         return response.json()
@@ -338,7 +317,8 @@ class Tools:
     async def summarize_vorlage(
         self,
         vorlage: str,
-        __request__: Optional[Request] = None,
+        __platform_url__: Optional[str] = None,
+        __platform_token__: Optional[str] = None,
         __user__: Optional[dict] = None,
         __event_emitter__=None,
         __event_call__=None,
@@ -376,8 +356,8 @@ class Tools:
 
         summary = await self._summarize_with_llm(
             full_text=full_text,
-            request=__request__,
-            user=__user__,
+            platform_url=__platform_url__,
+            platform_token=__platform_token__,
             user_valves=user_valves,
             events=events,
         )
@@ -816,16 +796,12 @@ class Tools:
     async def _summarize_with_llm(
         self,
         full_text: str,
-        request: Optional[Request],
-        user: Optional[dict],
+        platform_url: Optional[str],
+        platform_token: Optional[str],
         user_valves: Optional['Tools.UserValves'],
         events: EventEmitter,
     ) -> str:
-        if not request or not user or not Users:
-            return self._fallback_summary(full_text)
-
-        user_id = user.get('id') if isinstance(user, dict) else None
-        if not user_id:
+        if not platform_url or not platform_token:
             return self._fallback_summary(full_text)
 
         language = user_valves.preferred_language if user_valves else 'de'
@@ -843,7 +819,7 @@ class Tools:
         try:
             await events.status('🧠 Erstelle Zusammenfassung ...')
             await events.debug('Summary Prompt', body, self.valves.debug_mode)
-            response = await _generate_chat_completion(request, body, {'id': user_id})
+            response = await _generate_chat_completion(platform_url, platform_token, body)
             return response.get('choices', [{}])[0].get('message', {}).get('content', '').strip() or self._fallback_summary(full_text)
         except Exception as exc:
             await events.status(f'⚠️ LLM-Zusammenfassung fehlgeschlagen, nutze Kurzextrakt: {type(exc).__name__}')
