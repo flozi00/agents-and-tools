@@ -1,0 +1,11 @@
+{
+  "title": "GitLab CI Pipeline Results Tool",
+  "author": "OpenAI",
+  "version": "0.1.1",
+  "required_open_webui_version": "0.4.0",
+  "description": "Liest GitLab-CI/CD-Ergebnisse: Pipelines, Jobs, Testberichte und Job-Logs — rein lesend, für die Fehlersuche an fehlgeschlagenen Pipelines.",
+  "requirements": "requests",
+  "license": "MIT No Attribution (MIT-0)",
+  "original_author": "KommI – Kommunale Intelligenz (Boris van Benthem)",
+  "source_url": "https://gitlab.opencode.de/kommi/adapter/gitlab-adapter"
+}

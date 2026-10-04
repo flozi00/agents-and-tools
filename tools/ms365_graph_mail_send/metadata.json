@@ -1,0 +1,6 @@
+{
+  "title": "Microsoft 365 Mail (Graph)",
+  "description": "Sendet Ergebnisse per Microsoft Graph an die eigene E-Mail-Adresse der angemeldeten Person — optional mit Dateianhängen aus der Agent-VM.",
+  "author": "primeline",
+  "version": "1.0.2"
+}

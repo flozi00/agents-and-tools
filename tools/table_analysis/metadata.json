@@ -1,0 +1,13 @@
+{
+  "title": "Tabellenanalyse & Statistik",
+  "author": "OpenAI",
+  "author_url": "https://openai.com",
+  "git_url": "https://gitlab.opencode.de/kommi/adapter/tabellen-analyse",
+  "description": "Analysiert angehängte Excel-, CSV- und PDF-Dateien in Open WebUI, erstellt Profiling, Pivot-/Zeitraumanalysen und wendet statistische Methoden auf Tabellendaten an.",
+  "required_open_webui_version": "0.1.0",
+  "requirements": "pandas,numpy,scipy,openpyxl,pdfplumber",
+  "version": "0.1.1",
+  "license": "MIT No Attribution (MIT-0)",
+  "original_author": "KommI – Kommunale Intelligenz (Boris van Benthem)",
+  "source_url": "https://gitlab.opencode.de/kommi/adapter/tabellen-analyse"
+}

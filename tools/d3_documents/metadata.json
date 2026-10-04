@@ -1,0 +1,10 @@
+{
+  "title": "d.velop d.3 Document Tools",
+  "author": "OpenWebUI Function Assistant",
+  "version": "0.1.2",
+  "requirements": "httpx,pydantic,pypdf,python-docx,python-pptx",
+  "description": "Durchsucht das Dokumentenmanagement d.velop d.3, liest Dokumente samt Metadaten und extrahiert Text aus PDF-, Word- und PowerPoint-Anhängen.",
+  "license": "keine Lizenzangabe im Quellprojekt",
+  "original_author": "Boris van Benthem (KommI)",
+  "source_url": "https://gitlab.opencode.de/kommi/adapter/d3-adapter"
+}

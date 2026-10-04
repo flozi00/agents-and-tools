@@ -1,0 +1,10 @@
+{
+  "title": "Recht NRW Adapter",
+  "description": "Durchsucht das geltende und historische NRW-Landesrecht (Gesetze, Rechtsverordnungen, Verwaltungsvorschriften) ueber recht.nrw.de und ruft Normen als Inhaltsverzeichnis, einzelne Paragraphen oder Volltext ab.",
+  "author": "Florian Schade - Hochsauerlandkreis",
+  "version": "1.0.1",
+  "license": "keine Lizenzangabe im Quellprojekt",
+  "original_author": "Florian Schade – Hochsauerlandkreis",
+  "source_url": "https://gitlab.opencode.de/kommi/adapter/recht-nrw-adapter",
+  "Hinweise": ""
+}

@@ -1,0 +1,10 @@
+{
+  "title": "MediaWiki Suche",
+  "description": "Sucht im MediaWiki-Volltext, lädt Inhalte, lädt diese als Dateien hoch, gibt die Quellen an, liefert je Seite die internen Verlinkungen und extrahiert Datei-Anhänge (z. B. PDF) als Text.",
+  "author": "Boris van Benthem - Stadt Oberhausen",
+  "version": "0.4.1",
+  "requirements": "requests, pypdf",
+  "license": "keine Lizenzangabe im Quellprojekt",
+  "original_author": "Boris van Benthem (Stadt Oberhausen)",
+  "source_url": "https://gitlab.opencode.de/kommi/adapter/mediawiki-adapter"
+}

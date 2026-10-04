@@ -1,0 +1,11 @@
+{
+  "title": "BSI Stand-der-Technik Adapter",
+  "description": "Findet passende Anforderungen (Controls) aus der maschinenlesbaren BSI Stand-der-Technik-Bibliothek (OSCAL, GitHub) und liefert zitierfaehige Referenzen. Immer aktuell via ETag/Conditional-GET, ohne lokalen Voll-Spiegel.",
+  "author": "Florian Schade - Hochsauerlandkreis",
+  "version": "1.0.1",
+  "license": "keine Lizenzangabe im Quellprojekt",
+  "original_author": "Florian Schade – Hochsauerlandkreis",
+  "source_url": "https://gitlab.opencode.de/kommi/adapter/bsi_stand_der_technik_tools",
+  "Quelle": "https://github.com/BSI-Bund/Stand-der-Technik-Bibliothek",
+  "Viewer": "https://bsi-community.github.io/Stand-der-Technik-Viewer/"
+}

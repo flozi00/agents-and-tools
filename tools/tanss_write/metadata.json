@@ -1,0 +1,7 @@
+{
+  "title": "TANSS Write API",
+  "description": "Write tool for TANSS — create and update tickets, add comments, book time tracking entries (supports), and send ticket mails.",
+  "author": "flozi00",
+  "version": "0.1.1",
+  "requirements": "requests"
+}

@@ -1,0 +1,7 @@
+{
+  "title": "TANSS Read-Only API",
+  "description": "Read-only OpenWebUI tool for TANSS — tickets, companies, employees, supports, search, plus a generic GET/query passthrough covering the whole readable TANSS API.",
+  "author": "flozi00",
+  "version": "0.2.1",
+  "requirements": "requests"
+}

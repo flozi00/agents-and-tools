@@ -108,120 +108,138 @@
       "id": "allris_vorlagen",
       "name": "ALLRIS Vorlagen Tools",
       "description": "Sucht Vorlagen im Ratsinformationssystem ALLRIS, gibt Beschlussvorschlag, Beratungsfolge und Beschlusstexte im Volltext aus und listet die Anlagen samt PDF-Text auf.",
-      "version": "0.2.1",
-      "requirements": "httpx, beautifulsoup4, pydantic, pypdf"
+      "version": "0.2.2",
+      "requirements": "httpx, beautifulsoup4, pydantic, pypdf",
+      "format": "primeline-native"
     },
     {
       "id": "bsi_stand_der_technik",
       "name": "BSI Stand-der-Technik Adapter",
       "description": "Findet passende Anforderungen (Controls) aus der maschinenlesbaren BSI Stand-der-Technik-Bibliothek (OSCAL, GitHub) und liefert zitierfaehige Referenzen. Immer aktuell via ETag/Conditional-GET, ohne lokalen Voll-Spiegel.",
-      "version": "1.0"
+      "version": "1.0.1",
+      "format": "primeline-native"
     },
     {
       "id": "calculator",
       "name": "Rechner",
       "description": "Exakter Taschenrechner für Grundrechenarten, Potenzen, Prozente und Rundung — ohne Schätzfehler des Sprachmodells.",
-      "version": "1.0.0"
+      "version": "1.0.1",
+      "format": "primeline-native"
     },
     {
       "id": "d3_documents",
       "name": "d.velop d.3 Document Tools",
       "description": "Durchsucht das Dokumentenmanagement d.velop d.3, liest Dokumente samt Metadaten und extrahiert Text aus PDF-, Word- und PowerPoint-Anhängen.",
-      "version": "0.1.1",
-      "requirements": "httpx,pydantic,pypdf,python-docx,python-pptx"
+      "version": "0.1.2",
+      "requirements": "httpx,pydantic,pypdf,python-docx,python-pptx",
+      "format": "primeline-native"
     },
     {
       "id": "evergabe",
       "name": "e-Vergabe Tenders",
       "description": "Search, read, and download public procurement tenders from the e-Vergabe marketplace (evergabe-online.de) — listing, tender announcements, and all attached tender documents. Login-free.",
-      "version": "1.2.0",
-      "requirements": "requests"
+      "version": "1.2.1",
+      "requirements": "requests",
+      "format": "primeline-native"
     },
     {
       "id": "gesetze_im_internet",
       "name": "Gesetze im Internet",
       "description": "Findet und liest Bundesrecht über gesetze-im-internet.de — Gesetze nach Titel oder Kürzel suchen, Volltext einzelner Normen abrufen und die öffentliche Volltextsuche nutzen.",
-      "version": "0.1.0"
+      "version": "0.1.1",
+      "format": "primeline-native"
     },
     {
       "id": "gitlab_ci",
       "name": "GitLab CI Pipeline Results Tool",
       "description": "Liest GitLab-CI/CD-Ergebnisse: Pipelines, Jobs, Testberichte und Job-Logs — rein lesend, für die Fehlersuche an fehlgeschlagenen Pipelines.",
-      "version": "0.1.0",
-      "requirements": "requests"
+      "version": "0.1.1",
+      "requirements": "requests",
+      "format": "primeline-native"
     },
     {
       "id": "gitlab_repo",
       "name": "GitLab Repository Coding Tool",
       "description": "Liest und schreibt GitLab-Repositories über die REST-API — Dateien lesen, Branches und Forks anlegen, Änderungen committen, Merge Requests und Issues verwalten.",
-      "version": "0.3.4",
-      "requirements": "requests"
+      "version": "0.3.5",
+      "requirements": "requests",
+      "format": "primeline-native"
     },
     {
       "id": "iban_validator",
       "name": "IBAN-Prüfung",
       "description": "Prüft IBANs auf formale Gültigkeit (Prüfziffer nach ISO 13616) und formatiert sie zur besseren Lesbarkeit.",
-      "version": "1.0.0"
+      "version": "1.0.1",
+      "format": "primeline-native"
     },
     {
       "id": "mediawiki",
       "name": "MediaWiki Suche",
       "description": "Sucht im MediaWiki-Volltext, lädt Inhalte, lädt diese als Dateien hoch, gibt die Quellen an, liefert je Seite die internen Verlinkungen und extrahiert Datei-Anhänge (z. B. PDF) als Text.",
-      "version": "0.4",
-      "requirements": "requests, pypdf"
+      "version": "0.4.1",
+      "requirements": "requests, pypdf",
+      "format": "primeline-native"
     },
     {
       "id": "ms365_graph_mail_send",
       "name": "Microsoft 365 Mail (Graph)",
       "description": "Sendet Ergebnisse per Microsoft Graph an die eigene E-Mail-Adresse der angemeldeten Person — optional mit Dateianhängen aus der Agent-VM.",
-      "version": "1.0.1"
+      "version": "1.0.2",
+      "format": "primeline-native"
     },
     {
       "id": "niotix_sensors",
       "name": "Niotix Sensor Data Fetch",
       "description": "Abfragen über die Niotix X-API: (1) Messwerte via POST /xapi/v1/influxdb/query; (2) Sensorliste via GET /xapi/v1/virtual-devices; (3) gültige State Identifier eines Sensors (SHOW TAG VALUES, ohne Zeitfilter). Zeigt Tabellen & Citations in der WebUI.",
-      "version": "0.1.1",
-      "requirements": "aiohttp"
+      "version": "0.1.2",
+      "requirements": "aiohttp",
+      "format": "primeline-native"
     },
     {
       "id": "openlegaldata",
       "name": "OpenLegalData Adapter",
       "description": "Durchsucht Rechtsprechung und Gesetze ueber die offene OpenLegalData.io-API (Gerichtsentscheidungen im Volltext, Aktenzeichen-Lookup, Gesetzbuecher/Paragraphen) und liefert die Inhalte samt Quellen an das Sprachmodell.",
-      "version": "1.0"
+      "version": "1.0.1",
+      "format": "primeline-native"
     },
     {
       "id": "openstreetmap",
       "name": "Open Street Map Agent",
       "description": "Abfrage für Daten aus Open Street Map und Verarbeitung im Sprachmodell. Findet Koordinaten zu Orten, kann Distanzen zwischen Orten berechnen und herausfinden, Ob Adressen in Stadteilen liegen. Alle erarbeiteten Daten können in einer Karte dargestellt werden.",
-      "version": "0.3.1",
-      "requirements": "requests"
+      "version": "0.3.2",
+      "requirements": "requests",
+      "format": "primeline-native"
     },
     {
       "id": "recht_nrw",
       "name": "Recht NRW Adapter",
       "description": "Durchsucht das geltende und historische NRW-Landesrecht (Gesetze, Rechtsverordnungen, Verwaltungsvorschriften) ueber recht.nrw.de und ruft Normen als Inhaltsverzeichnis, einzelne Paragraphen oder Volltext ab.",
-      "version": "1.0"
+      "version": "1.0.1",
+      "format": "primeline-native"
     },
     {
       "id": "table_analysis",
       "name": "Tabellenanalyse & Statistik",
       "description": "Analysiert angehängte Excel-, CSV- und PDF-Dateien in Open WebUI, erstellt Profiling, Pivot-/Zeitraumanalysen und wendet statistische Methoden auf Tabellendaten an.",
-      "version": "0.1.0",
-      "requirements": "pandas,numpy,scipy,openpyxl,pdfplumber"
+      "version": "0.1.1",
+      "requirements": "pandas,numpy,scipy,openpyxl,pdfplumber",
+      "format": "primeline-native"
     },
     {
       "id": "tanss_read",
       "name": "TANSS Read-Only API",
       "description": "Read-only OpenWebUI tool for TANSS — tickets, companies, employees, supports, search, plus a generic GET/query passthrough covering the whole readable TANSS API.",
-      "version": "0.2.0",
-      "requirements": "requests"
+      "version": "0.2.1",
+      "requirements": "requests",
+      "format": "primeline-native"
     },
     {
       "id": "tanss_write",
       "name": "TANSS Write API",
       "description": "Write tool for TANSS — create and update tickets, add comments, book time tracking entries (supports), and send ticket mails.",
-      "version": "0.1.0",
-      "requirements": "requests"
+      "version": "0.1.1",
+      "requirements": "requests",
+      "format": "primeline-native"
     }
   ]
 }

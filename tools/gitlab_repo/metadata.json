@@ -1,0 +1,11 @@
+{
+  "title": "GitLab Repository Coding Tool",
+  "author": "OpenAI",
+  "version": "0.3.5",
+  "required_open_webui_version": "0.4.0",
+  "description": "Liest und schreibt GitLab-Repositories über die REST-API — Dateien lesen, Branches und Forks anlegen, Änderungen committen, Merge Requests und Issues verwalten.",
+  "requirements": "requests",
+  "license": "MIT No Attribution (MIT-0)",
+  "original_author": "KommI – Kommunale Intelligenz (Boris van Benthem)",
+  "source_url": "https://gitlab.opencode.de/kommi/adapter/gitlab-adapter"
+}

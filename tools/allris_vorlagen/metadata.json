@@ -1,0 +1,11 @@
+{
+  "title": "ALLRIS Vorlagen Tools",
+  "description": "Sucht Vorlagen im Ratsinformationssystem ALLRIS, gibt Beschlussvorschlag, Beratungsfolge und Beschlusstexte im Volltext aus und listet die Anlagen samt PDF-Text auf.",
+  "author": "Stadt Oberhausen (Boris van Benthem)",
+  "version": "0.2.2",
+  "required_open_webui_version": "0.9.5",
+  "requirements": "httpx, beautifulsoup4, pydantic, pypdf",
+  "license": "keine Lizenzangabe im Quellprojekt",
+  "original_author": "Stadt Oberhausen (Boris van Benthem)",
+  "source_url": "https://gitlab.opencode.de/kommi/adapter/allris-adapter"
+}

@@ -1,0 +1,14 @@
+Original MediaWiki-Adapter provenance
+
+Project: MediaWiki-Adapter (KommI adapter catalog, openCode)
+Source: https://gitlab.opencode.de/kommi/adapter/mediawiki-adapter
+Original file: mediawiki-adapter.py
+Original author: Boris van Benthem (Stadt Oberhausen)
+Extensions v0.2–0.4: Florian Schade (Hochsauerlandkreis)
+License statement in the adopted source: keine Lizenzangabe im Quellprojekt
+
+The original source states that the source project declares no license and
+that its inclusion in the catalog is not a grant of rights. This native port
+preserves that notice and attribution; it does not relicense the original
+adapter or claim that an upstream license was granted. The original catalog
+notice provides for removal at the author's request.

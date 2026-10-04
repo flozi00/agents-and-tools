@@ -1,0 +1,7 @@
+{
+  "title": "e-Vergabe Tenders",
+  "description": "Search, read, and download public procurement tenders from the e-Vergabe marketplace (evergabe-online.de) — listing, tender announcements, and all attached tender documents. Login-free.",
+  "author": "primeLine Solutions GmbH",
+  "version": "1.2.1",
+  "requirements": "requests"
+}

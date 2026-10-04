@@ -1,0 +1,10 @@
+{
+  "title": "OpenLegalData Adapter",
+  "description": "Durchsucht Rechtsprechung und Gesetze ueber die offene OpenLegalData.io-API (Gerichtsentscheidungen im Volltext, Aktenzeichen-Lookup, Gesetzbuecher/Paragraphen) und liefert die Inhalte samt Quellen an das Sprachmodell.",
+  "author": "Florian Schade - Hochsauerlandkreis",
+  "version": "1.0.1",
+  "license": "keine Lizenzangabe im Quellprojekt",
+  "original_author": "Florian Schade – Hochsauerlandkreis",
+  "source_url": "https://gitlab.opencode.de/kommi/adapter/openlegaldata",
+  "Hinweis": "OpenLegalData ist ein Community-Projekt ohne amtliche"
+}

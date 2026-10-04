@@ -1,14 +1,17 @@
 # Herkunft übernommener Werkzeuge
 
 Dieser Katalog enthält Werkzeuge, die aus fremden Projekten übernommen
-wurden. Ergänzt wurden dabei der Herkunftshinweis und die Katalog-Metadaten
-im Dateikopf; der Code selbst ist unverändert, sofern im Herkunftsblock der
-jeweiligen `tool.py` nichts anderes ausgewiesen ist.
+wurden. Die laufende Rust-Portierung ersetzt ihre Python-Implementierungen
+durch native Katalog-Manifeste. Herkunft, Quell-URL, Urheber und Lizenzangaben
+bleiben in den Metadaten erhalten. Noch nicht portierte Werkzeuge tragen
+diese Angaben weiterhin im Kopf ihrer `tool.py`.
 
-Jede übernommene `tool.py` trägt Projekt, Quell-URL, Urheber und Lizenz im
-Kopf mit sich — bei lizenzierten Werkzeugen samt vollständigem Lizenztext,
-bei Werkzeugen ohne Lizenzangabe mit einem ausdrücklichen Hinweis darauf.
-So bleibt die Angabe auch in einer installierten Kopie erhalten.
+Die vollständigen ursprünglichen Herkunfts- und Lizenzblöcke aller Werkzeuge
+sind zusätzlich in
+[`SOURCE_NOTICES.md`](SOURCE_NOTICES.md)
+archiviert und werden mit dem nativen Ausführungsdienst ausgeliefert.
+Fehlende Lizenzangaben bleiben ausdrücklich als solche gekennzeichnet;
+die Portierung erteilt keine zusätzlichen Rechte.
 
 ## KommI – Kommunale Intelligenz (openCode)
 
@@ -60,17 +63,22 @@ Bei `gesetze_im_internet` wurde zusätzlich die Kommentarzeile
 `# Target: OpenWebUI Tools Function` vor dem Docstring entfernt — der
 Frontmatter-Parser der Installation erkennt den Kopf nur, wenn die Datei mit
 dem Docstring beginnt. Die Änderung ist im Herkunftsblock der `tool.py`
-ausgewiesen. Alle übrigen Dateien sind im Code unverändert.
+ausgewiesen und in `SOURCE_NOTICES.md` archiviert. Die ursprünglichen
+Quelldateinamen in den Tabellen dokumentieren die Herkunft. Native
+Rust-Portierungen bewahren die Herkunft und die Lizenztexte; die zugehörigen
+Manifeste und Metadaten ersetzen den früheren Python-Katalogquelltext.
 
 ## Regeln für weitere Übernahmen
 
 1. Die Lizenz des Quellprojekts wird vor der Übernahme geprüft und im
    Herkunftsblock benannt. Fehlt eine Lizenz, wird das **ausdrücklich als
-   fehlend** ausgewiesen — sowohl in der `tool.py` als auch hier. Eine
+   fehlend** ausgewiesen — in den Werkzeugmetadaten und hier. Eine
    fehlende Lizenz bedeutet, dass alle Rechte beim Urheber liegen; die
    Aufnahme in den Katalog ersetzt keine Rechteeinräumung.
-2. Der Herkunftsblock in der `tool.py` nennt Projekt, Quell-URL, Dateiname,
-   Autor und Lizenz und enthält den vollständigen Lizenztext.
-3. Der Code selbst bleibt unverändert. Notwendige Anpassungen werden im
-   Herkunftsblock als Änderung ausgewiesen.
+2. Der Herkunftsblock nennt Projekt, Quell-URL, Dateiname, Autor und Lizenz
+   und enthält den vollständigen Lizenztext. Er bleibt bei einer nativen
+   Portierung in `SOURCE_NOTICES.md` und beim Ausführungsdienst erhalten;
+   `metadata.json` bewahrt die Herkunft im installierten Katalog.
+3. Anpassungen und native Portierungen werden in den Werkzeugdokumenten
+   als Änderungen ausgewiesen. Herkunfts- und Lizenzangaben bleiben erhalten.
 4. Diese Datei wird um eine Zeile pro übernommenem Werkzeug ergänzt.

@@ -1,0 +1,10 @@
+{
+  "title": "Niotix Sensor Data Fetch",
+  "author": "Boris van Benthem",
+  "description": "Abfragen über die Niotix X-API: (1) Messwerte via POST /xapi/v1/influxdb/query; (2) Sensorliste via GET /xapi/v1/virtual-devices; (3) gültige State Identifier eines Sensors (SHOW TAG VALUES, ohne Zeitfilter). Zeigt Tabellen & Citations in der WebUI.",
+  "version": "0.1.2",
+  "requirements": "aiohttp",
+  "license": "MIT",
+  "original_author": "Boris van Benthem",
+  "source_url": "https://gitlab.opencode.de/kommi/adapter/niotix-adapter"
+}

@@ -1,0 +1,8 @@
+{
+  "title": "Gesetze im Internet",
+  "description": "Findet und liest Bundesrecht über gesetze-im-internet.de — Gesetze nach Titel oder Kürzel suchen, Volltext einzelner Normen abrufen und die öffentliche Volltextsuche nutzen.",
+  "version": "0.1.1",
+  "license": "keine Lizenzangabe im Quellprojekt",
+  "original_author": "Boris van Benthem (KommI)",
+  "source_url": "https://gitlab.opencode.de/kommi/adapter/bundesgesetzadapter"
+}

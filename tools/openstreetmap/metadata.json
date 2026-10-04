@@ -1,0 +1,10 @@
+{
+  "title": "Open Street Map Agent",
+  "author": "Boris van Benthem (Stadt Oberhausen)",
+  "description": "Abfrage für Daten aus Open Street Map und Verarbeitung im Sprachmodell. Findet Koordinaten zu Orten, kann Distanzen zwischen Orten berechnen und herausfinden, Ob Adressen in Stadteilen liegen. Alle erarbeiteten Daten können in einer Karte dargestellt werden.",
+  "version": "0.3.2",
+  "requirements": "requests",
+  "license": "MIT",
+  "original_author": "Boris van Benthem (Stadt Oberhausen)",
+  "source_url": "https://gitlab.opencode.de/kommi/adapter/osm-adapter"
+}
