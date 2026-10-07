@@ -88,6 +88,32 @@ export function readTool(root, id) {
 	const content = readFileSync(python, 'utf8');
 	return { id, content, frontmatter: frontmatter(content), format: 'python' };
 }
+// Keys an exported app carries that tie it to one installation.
+export const APP_LOCAL_KEYS = ['access_grants', 'exported_at', 'source_project_id', 'source_project_name'];
+export const APP_ID = /^[a-z0-9][a-z0-9-]{0,63}$/;
+export function readApp(root, id) {
+	if (!APP_ID.test(id)) throw new Error(`app id "${id}" must be lowercase kebab-case`);
+	const path = join(root, 'apps', id, 'app.json');
+	if (!file(path)) throw new Error(`apps/${id}/app.json is missing`);
+	const template = readJson(path);
+	if (!object(template) || template.id !== id)
+		throw new Error(`apps/${id}: "id" must equal the directory name`);
+	for (const key of ['name', 'version', 'description'])
+		if (!truthy(template[key])) throw new Error(`apps/${id}: "${key}" is required`);
+	for (const key of APP_LOCAL_KEYS)
+		if (Object.hasOwn(template, key))
+			throw new Error(`apps/${id}: "${key}" is not portable and not allowed in apps`);
+	if (!Array.isArray(template.record_types) || template.record_types.length === 0)
+		throw new Error(`apps/${id}: record_types must be a non-empty array`);
+	const entry = {
+		id,
+		name: template.name,
+		description: template.description,
+		version: template.version
+	};
+	if (truthy(template.category)) entry.category = template.category;
+	return entry;
+}
 export function generateIndex(root = HUB) {
 	const tools = directories(root, 'tools').map((id) => {
 		const record = readTool(root, id);
@@ -104,6 +130,8 @@ export function generateIndex(root = HUB) {
 		return entry;
 	});
 	const known = new Set(tools.map((tool) => tool.id));
+	const apps = directories(root, 'apps').map((id) => readApp(root, id));
+	const knownApps = new Set(apps.map((app) => app.id));
 	const assistants = directories(root, 'assistants').map((id) => {
 		if (!/^[a-z0-9][a-z0-9-]{0,63}$/.test(id))
 			throw new Error(`assistant id "${id}" must be lowercase kebab-case`);
@@ -122,6 +150,11 @@ export function generateIndex(root = HUB) {
 		for (const dependency of dependencies)
 			if (!known.has(dependency))
 				throw new Error(`assistants/${id}: references unknown hub tool "${dependency}"`);
+		const appDependencies = Object.hasOwn(template, 'apps') ? template.apps : [];
+		if (!Array.isArray(appDependencies)) throw new Error(`assistants/${id}: apps must be an array`);
+		for (const dependency of appDependencies)
+			if (!knownApps.has(dependency))
+				throw new Error(`assistants/${id}: references unknown hub app "${dependency}"`);
 		const entry = {
 			id,
 			name: template.name,
@@ -129,10 +162,11 @@ export function generateIndex(root = HUB) {
 			version: template.version,
 			tools: dependencies
 		};
+		if (appDependencies.length > 0) entry.apps = appDependencies;
 		if (truthy(template.profile_image_url)) entry.profile_image_url = template.profile_image_url;
 		return entry;
 	});
-	const index = { version: 1, assistants, tools };
+	const index = { version: 1, assistants, tools, apps };
 	writeFileSync(join(root, 'index.json'), JSON.stringify(index, null, 2) + '\n', 'utf8');
 	return index;
 }
@@ -141,7 +175,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
 		if (process.argv.length !== 2) throw new Error('usage: node scripts/generate_index.mjs');
 		const index = generateIndex();
 		console.log(
-			`index.json written: ${index.assistants.length} assistants, ${index.tools.length} tools`
+			`index.json written: ${index.assistants.length} assistants, ${index.tools.length} tools, ${index.apps.length} apps`
 		);
 	} catch (error) {
 		console.error(`error: ${error.message}`);

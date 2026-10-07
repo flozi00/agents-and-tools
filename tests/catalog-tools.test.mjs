@@ -5,6 +5,7 @@ import { dirname, join } from 'node:path';
 import test from 'node:test';
 import { generateIndex } from '../scripts/generate_index.mjs';
 import { checkTools } from '../scripts/check_tools.mjs';
+import { addApp, appId } from '../scripts/add_app.mjs';
 
 function fixture(t) {
 	const root = mkdtempSync(join(tmpdir(), 'hub-catalog-'));
@@ -68,7 +69,8 @@ test('standalone index preserves Python metadata and adds an explicit native for
 				version: '2.0',
 				requirements: 'requests'
 			}
-		]
+		],
+		apps: []
 	});
 	assert.equal(
 		readFileSync(join(root, 'index.json'), 'utf8'),
@@ -194,4 +196,99 @@ test('checker preserves missing external-dependency notices while continuing oth
 	assert.equal(result.failures.length, 0);
 	assert.deepEqual(result.skipped, ['legacy']);
 	assert.equal(result.checked, 2);
+});
+
+const app = {
+	id: 'notary',
+	name: 'Notary',
+	description: 'Property purchases',
+	version: '1.0.0',
+	category: 'Legal',
+	record_types: [{ key: 'case', name: 'Case', fields: [] }],
+	views: [],
+	records: []
+};
+
+test('index lists apps and the apps an assistant brings along', (t) => {
+	const root = fixture(t);
+	write(root, 'apps/notary/app.json', JSON.stringify(app));
+	write(
+		root,
+		'assistants/notar/assistant.json',
+		JSON.stringify({
+			id: 'notar',
+			name: 'Notar',
+			description: 'Helper',
+			version: '1',
+			system_prompt: 'Help',
+			apps: ['notary']
+		})
+	);
+	const result = generateIndex(root);
+	assert.deepEqual(result.apps, [
+		{
+			id: 'notary',
+			name: 'Notary',
+			description: 'Property purchases',
+			version: '1.0.0',
+			category: 'Legal'
+		}
+	]);
+	assert.deepEqual(result.assistants[0].apps, ['notary']);
+});
+
+test('index refuses non-portable, unnamed or mismatched apps and unknown app dependencies', (t) => {
+	for (const change of [
+		{ id: 'other' },
+		{ version: '' },
+		{ record_types: [] },
+		{ access_grants: [] },
+		{ source_project_id: null },
+		{ exported_at: 1 }
+	]) {
+		const root = fixture(t);
+		write(root, 'apps/notary/app.json', JSON.stringify({ ...app, ...change }));
+		assert.throws(() => generateIndex(root));
+	}
+	const root = fixture(t);
+	write(
+		root,
+		'assistants/notar/assistant.json',
+		JSON.stringify({
+			id: 'notar',
+			name: 'Notar',
+			description: 'Helper',
+			version: '1',
+			system_prompt: 'Help',
+			apps: ['missing']
+		})
+	);
+	assert.throws(() => generateIndex(root), /unknown hub app/);
+});
+
+test('add_app turns an exported app into a portable catalog entry', (t) => {
+	const root = fixture(t);
+	const exported = {
+		...app,
+		id: 'notariat_grundstückskauf',
+		version: undefined,
+		exported_at: 1791360000,
+		source_project_id: 'p-1',
+		source_project_name: 'Mine',
+		access_grants: [{ principal_id: '*' }]
+	};
+	const written = addApp(root, exported);
+	assert.equal(written.id, 'notariat-grundstuckskauf');
+	assert.equal(written.version, '1.0.0');
+	const stored = JSON.parse(readFileSync(join(root, 'apps', written.id, 'app.json'), 'utf8'));
+	for (const key of ['exported_at', 'source_project_id', 'source_project_name', 'access_grants'])
+		assert.equal(Object.hasOwn(stored, key), false, key);
+	const index = JSON.parse(readFileSync(join(root, 'index.json'), 'utf8'));
+	assert.deepEqual(
+		index.apps.map((entry) => entry.id),
+		['notariat-grundstuckskauf']
+	);
+	assert.equal(appId('  Ünïcode App!! '), 'unicode-app');
+	assert.throws(() => addApp(root, [], {}));
+	assert.throws(() => addApp(root, { ...app, id: '---' }, {}));
 });

@@ -1,6 +1,6 @@
 # EUPrompt Hub
 
-Public catalog of predefined assistants and tools for EUPrompt installations.
+Public catalog of predefined assistants, tools and apps for EUPrompt installations.
 Installations browse this repo under **Workspace → Hub**, install items, and pull
 updates when versions change here.
 
@@ -15,15 +15,17 @@ application image. This repository is embedded as the `hub/` git submodule.
 index.json                       generated catalog index (commit it)
 scripts/generate_index.mjs       regenerates index.json, validates entries
 scripts/check_tools.mjs          checks live native-runtime descriptors
+scripts/add_app.mjs              adds an app exported from EU-Prompt
 tools/<tool_id>/tool.json        native implementation manifest
 tools/<tool_id>/metadata.json    native catalog metadata
 tools/<tool_id>/tool.py          external Python catalog compatibility
 assistants/<assistant_id>/assistant.json
+apps/<app_id>/app.json
 ```
 
 The backend reads `index.json`, each tool's selected source (`tool.json` for
 `format: "primeline-native"`, otherwise `tool.py`), and
-`assistants/<id>/assistant.json`. File locations are derived from ids, never
+`assistants/<id>/assistant.json` and `apps/<id>/app.json`. File locations are derived from ids, never
 from paths inside the index. Both tool formats retain the installation's
 existing access checks, valves and private execution VM.
 
@@ -78,12 +80,39 @@ changes also require the matching EU-Prompt execution image.
 ```
 
 Optional keys: `profile_image_url` (https URL or data URI), `capabilities`,
-`builtin_tools` (category toggles, e.g. `{ "web": true }`).
+`builtin_tools` (category toggles, e.g. `{ "web": true }`), `apps` (hub app ids;
+each is created as a new app when the assistant is first installed).
 
 Portability rules — assistants must work on every installation, so a template
 **never** contains: a base model (chosen at install time), access grants,
 knowledge bases, or references to tool servers / MCP connections. `tools` may
-only list tool ids from this hub; they are installed as dependencies.
+only list tool ids from this hub; they are installed as dependencies. `apps` may
+only list app ids from this hub.
+
+## Apps
+
+An app is a ready-made EU-Prompt app (record types, views, dashboard,
+automations, optional sample records) in the portable template format the app
+page downloads (**App → Settings → Download template**). `app_id` must be
+lowercase kebab-case; `app.json` needs `id`, `name`, `version`, `description`
+and non-empty `record_types`.
+
+Every installation lists hub apps in its app template gallery, and agents find
+them through `list_app_templates`, so anyone allowed to create apps — and their
+agents — can install one. Each install creates a new app; its automations start
+paused and the creator decides who gets access.
+
+To share an app:
+
+```sh
+node scripts/add_app.mjs ~/Downloads/my-app.json [app-id] [version]
+```
+
+The script derives a kebab-case id, sets `version` (default `1.0.0`), removes
+installation-local keys (`access_grants`, `exported_at`, `source_project_id`,
+`source_project_name`) and regenerates `index.json`. It warns when records are
+included: publish only sample data, never client data. Bump `version` when you
+replace an app.
 
 ## Übernommene Werkzeuge
 

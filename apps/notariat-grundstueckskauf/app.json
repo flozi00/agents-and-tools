@@ -1,0 +1,1350 @@
+{
+	"id": "notariat-grundstueckskauf",
+	"name": "Notary: Property Purchase",
+	"description": "Run notarial property purchases from intake to transfer of ownership: an agent reads client and broker data, lists missing details, fills the contract template and watches every completion deadline.",
+	"category": "Legal",
+	"schema_version": 1,
+	"tags": [
+		"Notariat",
+		"Kanzlei",
+		"Grundstückskauf",
+		"AI-ready"
+	],
+	"features": [
+		"Vorgangs-Board von Eingang bis Eigentumsumschreibung",
+		"Beteiligte mit Identitäts-, GwG-, Transparenzregister- und Sanktionslisten-Status",
+		"Grundstücke mit Grundbuchstelle, Eigentümer und Belastungen",
+		"Fristen- und Vollzugsüberwachung mit Kalender und Überfällig-Ansicht",
+		"Online-Formular für Mandanten und Makler als Eingang",
+		"Vorlagen für Grundmuster und Musterschreiben"
+	],
+	"outcomes": [
+		"Eine Makler-E-Mail einfügen — der Agent legt Akte, Beteiligte und Objekt an",
+		"Fehlende Angaben stehen als Liste mit fertigem Rückfragetext im Vorgang",
+		"Den Vertragsentwurf aus dem eigenen Grundmuster vorbereiten lassen",
+		"Jeden Morgen sehen, welche Genehmigung, Löschungsbewilligung oder Frist offen ist"
+	],
+	"project": {
+		"name": "Notariat: Grundstückskaufverträge",
+		"description": "Kaufvertragsvorgänge, Beteiligte, Grundstücke, Vollzug und Fristen mit Agent-Unterstützung.",
+		"meta": {
+			"app_builder": {
+				"enabled": true,
+				"title": "Notariat: Grundstückskaufverträge",
+				"summary": "Vom Datenblatt bis zur Eigentumsumschreibung: Vorgänge, Prüfungen, Vollzug und Fristen an einem Ort.",
+				"primary_view_key": "vorgaenge-board",
+				"view_keys": [
+					"vorgaenge-board",
+					"vorgaenge",
+					"nachforderungen",
+					"vollzug-offen",
+					"vollzug-kalender",
+					"beteiligte",
+					"grundstuecke",
+					"eingang-log",
+					"vorlagen",
+					"unterlagen-einreichen",
+					"vollzugsschritt-erfassen"
+				],
+				"navigation_groups": [
+					{
+						"label": "Vorgänge",
+						"view_keys": [
+							"vorgaenge-board",
+							"vorgaenge",
+							"nachforderungen"
+						]
+					},
+					{
+						"label": "Vollzug & Fristen",
+						"view_keys": [
+							"vollzug-offen",
+							"vollzug-kalender",
+							"vollzugsschritt-erfassen"
+						]
+					},
+					{
+						"label": "Stammdaten",
+						"view_keys": [
+							"beteiligte",
+							"grundstuecke",
+							"vorlagen"
+						]
+					},
+					{
+						"label": "Eingang",
+						"view_keys": [
+							"eingang-log",
+							"unterlagen-einreichen"
+						]
+					}
+				],
+				"accent": "blue",
+				"home_mode": "dashboard",
+				"allow_submissions": true,
+				"submit_label": "Unterlagen senden",
+				"success_message": "Vielen Dank — wir haben Ihre Angaben erhalten und melden uns bei Rückfragen.",
+				"dashboard_metrics": [
+					{
+						"id": "offene-vorgaenge",
+						"label": "Offene Vorgänge",
+						"aggregate": "count",
+						"record_type_key": "vorgang",
+						"conditions": [
+							{
+								"field": "status",
+								"operator": "not_equals",
+								"value": "Abgeschlossen"
+							}
+						]
+					},
+					{
+						"id": "rueckfragen",
+						"label": "Rückfragen offen",
+						"aggregate": "count",
+						"record_type_key": "vorgang",
+						"conditions": [
+							{
+								"field": "value:fehlende_angaben",
+								"operator": "is_not_empty"
+							},
+							{
+								"field": "status",
+								"operator": "not_equals",
+								"value": "Abgeschlossen"
+							}
+						]
+					},
+					{
+						"id": "fristen-ueberfaellig",
+						"label": "Fristen überfällig",
+						"aggregate": "count",
+						"record_type_key": "vollzugsschritt",
+						"conditions": [
+							{
+								"field": "date",
+								"operator": "before",
+								"value": "today"
+							},
+							{
+								"field": "status",
+								"operator": "not_equals",
+								"value": "Erledigt"
+							}
+						]
+					},
+					{
+						"id": "fristen-7-tage",
+						"label": "Fristen in 7 Tagen",
+						"aggregate": "count",
+						"record_type_key": "vollzugsschritt",
+						"conditions": [
+							{
+								"field": "date",
+								"operator": "on_or_after",
+								"value": "today"
+							},
+							{
+								"field": "date",
+								"operator": "on_or_before",
+								"value": "today+7"
+							},
+							{
+								"field": "status",
+								"operator": "not_equals",
+								"value": "Erledigt"
+							}
+						]
+					},
+					{
+						"id": "gwg-offen",
+						"label": "GwG-Prüfung offen",
+						"aggregate": "count",
+						"record_type_key": "vorgang",
+						"conditions": [
+							{
+								"field": "value:gwg_status",
+								"operator": "not_equals",
+								"value": "Geprüft"
+							},
+							{
+								"field": "status",
+								"operator": "not_equals",
+								"value": "Abgeschlossen"
+							}
+						]
+					}
+				],
+				"dashboard_charts": [
+					{
+						"id": "vorgaenge-phase",
+						"label": "Vorgänge nach Phase",
+						"type": "bar",
+						"aggregate": "count",
+						"record_type_key": "vorgang",
+						"group_by": [
+							"status"
+						],
+						"limit": 9
+					},
+					{
+						"id": "vollzug-schritt",
+						"label": "Offene Vollzugsschritte",
+						"type": "bar",
+						"aggregate": "count",
+						"record_type_key": "vollzugsschritt",
+						"group_by": [
+							"value:schritt"
+						],
+						"limit": 12,
+						"conditions": [
+							{
+								"field": "status",
+								"operator": "not_equals",
+								"value": "Erledigt"
+							}
+						]
+					},
+					{
+						"id": "fristen-je-woche",
+						"label": "Fristen je Woche",
+						"description": "Offene Vollzugsschritte nach Fristwoche, acht Wochen voraus.",
+						"type": "bar",
+						"aggregate": "count",
+						"record_type_key": "vollzugsschritt",
+						"group_by": [
+							"date:week"
+						],
+						"limit": 10,
+						"conditions": [
+							{
+								"field": "status",
+								"operator": "not_equals",
+								"value": "Erledigt"
+							},
+							{
+								"field": "date",
+								"operator": "on_or_after",
+								"value": "today"
+							},
+							{
+								"field": "date",
+								"operator": "on_or_before",
+								"value": "today+56"
+							}
+						]
+					}
+				],
+				"dashboard_filters": [
+					{
+						"id": "phase",
+						"label": "Phase",
+						"field": "status",
+						"operator": "equals",
+						"options": [
+							"Eingang",
+							"Prüfung",
+							"Vorprüfung",
+							"Entwurf",
+							"Beurkundung",
+							"Vollzug",
+							"Fälligkeit",
+							"Umschreibung",
+							"Abgeschlossen"
+						]
+					}
+				],
+				"dashboard_notes": [
+					{
+						"id": "agent-workflow",
+						"title": "So arbeitet der Agent mit",
+						"body": "Makler-E-Mail, ausgefülltes Datenblatt oder Grundbuchauszug in den Chat geben und „Lege dafür einen Vorgang an“ schreiben. Der Agent legt Vorgang, Beteiligte und Grundstück an, listet fehlende Angaben mit einem fertigen Rückfragetext auf und bereitet aus Ihrem Grundmuster (Vorlagen) den Vertragsentwurf vor. Rechtliche Prüfung, Identitätsfeststellung und Beurkundung bleiben bei Ihnen.",
+						"style": "info"
+					},
+					{
+						"id": "systeme",
+						"title": "XNP, eNova, Grundbuchportal, RA-MICRO",
+						"body": "Für diese Systeme gibt es hier keine Schnittstelle. Die App führt die Schritte als Vollzugsschritte mit Frist, der Agent bereitet Daten und Schreiben vor — Abruf, Einreichung und Versand erledigt Ihr Team wie gewohnt im jeweiligen System und setzt den Schritt danach auf „Erledigt“.",
+						"style": "warning"
+					},
+					{
+						"id": "pulse-setup",
+						"title": "Tägliche Vollzugsübersicht",
+						"body": "Unter Automationen eine Prompt-Automation anlegen, werktags 07:30, mit dieser App verknüpfen. Prompt-Vorlage: „Erstelle die tägliche Vollzugsübersicht für diese App: Vollzugsschritte mit Frist vor heute und Status nicht „Erledigt“, Fristen der nächsten sieben Tage, Vorgänge mit fehlenden Angaben und Vorgänge, bei denen alle Voraussetzungen für die Fälligkeitsmitteilung vorliegen. Nenne je Punkt Aktenzeichen, Stelle und den nächsten Schritt.“",
+						"style": "info"
+					}
+				],
+				"dashboard_sections": [
+					{
+						"id": "lage",
+						"title": "Lage",
+						"metric_ids": [
+							"offene-vorgaenge",
+							"rueckfragen",
+							"gwg-offen",
+							"fristen-ueberfaellig",
+							"fristen-7-tage"
+						]
+					},
+					{
+						"id": "vollzug",
+						"title": "Vollzug",
+						"chart_ids": [
+							"vorgaenge-phase",
+							"vollzug-schritt",
+							"fristen-je-woche"
+						]
+					},
+					{
+						"id": "arbeitsweise",
+						"title": "Arbeitsweise",
+						"note_ids": [
+							"agent-workflow",
+							"systeme",
+							"pulse-setup"
+						]
+					}
+				],
+				"actions": [
+					{
+						"id": "neuer-vollzugsschritt",
+						"label": "Vollzugsschritt erfassen",
+						"type": "view",
+						"view_key": "vollzugsschritt-erfassen",
+						"style": "primary"
+					},
+					{
+						"id": "angaben-vollstaendig",
+						"label": "Angaben vollständig",
+						"type": "record_update",
+						"scope": "record",
+						"style": "primary",
+						"conditions": [
+							{
+								"field": "value:kaufpreis",
+								"operator": "is_not_empty"
+							},
+							{
+								"field": "status",
+								"operator": "equals",
+								"value": "Prüfung"
+							}
+						],
+						"patch": {
+							"status": "Vorprüfung",
+							"values": {
+								"fehlende_angaben": ""
+							}
+						}
+					},
+					{
+						"id": "schritt-angefordert",
+						"label": "Angefordert",
+						"type": "record_update",
+						"scope": "record",
+						"conditions": [
+							{
+								"field": "value:schritt",
+								"operator": "is_not_empty"
+							},
+							{
+								"field": "status",
+								"operator": "equals",
+								"value": "Offen"
+							}
+						],
+						"patch": {
+							"status": "Angefordert"
+						}
+					},
+					{
+						"id": "schritt-eingegangen",
+						"label": "Eingegangen",
+						"type": "record_update",
+						"scope": "record",
+						"conditions": [
+							{
+								"field": "value:schritt",
+								"operator": "is_not_empty"
+							},
+							{
+								"field": "status",
+								"operator": "equals",
+								"value": "Angefordert"
+							}
+						],
+						"patch": {
+							"status": "Eingegangen"
+						}
+					},
+					{
+						"id": "schritt-erledigt",
+						"label": "Erledigt",
+						"type": "record_update",
+						"scope": "record",
+						"style": "primary",
+						"conditions": [
+							{
+								"field": "value:schritt",
+								"operator": "is_not_empty"
+							},
+							{
+								"field": "status",
+								"operator": "not_equals",
+								"value": "Erledigt"
+							}
+						],
+						"patch": {
+							"status": "Erledigt"
+						}
+					},
+					{
+						"id": "eingang-verarbeitet",
+						"label": "Als verarbeitet markieren",
+						"type": "record_update",
+						"scope": "record",
+						"conditions": [
+							{
+								"field": "value:quelle",
+								"operator": "is_not_empty"
+							},
+							{
+								"field": "status",
+								"operator": "not_equals",
+								"value": "Verarbeitet"
+							}
+						],
+						"patch": {
+							"status": "Verarbeitet"
+						}
+					}
+				]
+			},
+			"notariat": {
+				"case_record_type_key": "vorgang",
+				"party_record_type_key": "beteiligter",
+				"property_record_type_key": "grundstueck",
+				"step_record_type_key": "vollzugsschritt",
+				"inbox_record_type_key": "eingang",
+				"template_record_type_key": "vorlage",
+				"phases": [
+					"Eingang",
+					"Prüfung",
+					"Vorprüfung",
+					"Entwurf",
+					"Beurkundung",
+					"Vollzug",
+					"Fälligkeit",
+					"Umschreibung",
+					"Abgeschlossen"
+				],
+				"agent_rules": "Neue Eingänge (E-Mail, Maklerformular, Online-Datenblatt) lesen: Beteiligte, Objekt und Kaufpreis per upsert_app_record als beteiligter-, grundstueck- und vorgang-Records anlegen; external_id stabil je Quelle, damit zweimal Einfügen kein Duplikat erzeugt. Fehlende Pflichtangaben (Geburtsdatum, Anschrift, Steuer-ID, Grundbuchstelle, Finanzierung) in fehlende_angaben auflisten und einen Rückfragetext entwerfen, nie erfinden. Den Eingang mit Relation auf den Vorgang speichern und danach auf „Verarbeitet“ setzen. Grundbuchauszug als PDF angehängt: Eigentümer und Belastungen in den Grundstücks-Record übernehmen und Abweichungen zum Datenblatt melden. Entwurf: das Grundmuster aus „Vorlagen“ mit den Vorgangsdaten füllen und offene Sonderkonstellationen als Hinweis markieren. Für jeden Vollzugsschritt aus dem Musterschreiben ein Anschreiben entwerfen. XNP, eNova, Grundbuchportal und RA-MICRO nicht ansteuern — das bleibt beim Team.",
+				"pulse": {
+					"suggested_rrule": "FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR;BYHOUR=7;BYMINUTE=30",
+					"prompt": "Erstelle die tägliche Vollzugsübersicht für diese App: Vollzugsschritte mit Frist vor heute und Status nicht „Erledigt“, Fristen der nächsten sieben Tage, Vorgänge mit fehlenden Angaben und Vorgänge, bei denen alle Voraussetzungen für die Fälligkeitsmitteilung vorliegen. Nenne je Punkt Aktenzeichen, Stelle und den nächsten Schritt."
+				}
+			}
+		}
+	},
+	"record_types": [
+		{
+			"key": "vorgang",
+			"name": "Vorgang",
+			"kind": "record",
+			"description": "Ein Kaufvertragsvorgang von der Anfrage bis zur Eigentumsumschreibung. Der Status ist die Phase, das Datum der Beurkundungstermin.",
+			"fields": [
+				{
+					"key": "aktenzeichen",
+					"name": "Aktenzeichen",
+					"type": "text"
+				},
+				{
+					"key": "urkundennummer",
+					"name": "UVZ-Nummer",
+					"type": "text"
+				},
+				{
+					"key": "grundstueck",
+					"name": "Grundstück",
+					"type": "relation",
+					"config": {
+						"target_record_type_key": "grundstueck"
+					}
+				},
+				{
+					"key": "verkaeufer",
+					"name": "Verkäufer",
+					"type": "relation",
+					"config": {
+						"target_record_type_key": "beteiligter",
+						"multiple": true
+					}
+				},
+				{
+					"key": "kaeufer",
+					"name": "Käufer",
+					"type": "relation",
+					"config": {
+						"target_record_type_key": "beteiligter",
+						"multiple": true
+					}
+				},
+				{
+					"key": "makler",
+					"name": "Makler",
+					"type": "text"
+				},
+				{
+					"key": "kaufpreis",
+					"name": "Kaufpreis (€)",
+					"type": "number"
+				},
+				{
+					"key": "finanzierung",
+					"name": "Finanzierungsgrundschuld",
+					"type": "boolean"
+				},
+				{
+					"key": "sonderkonstellationen",
+					"name": "Sonderkonstellationen",
+					"type": "multi_select",
+					"config": {
+						"options": [
+							"Vorkaufsrecht",
+							"Genehmigung erforderlich",
+							"Gesellschaft beteiligt",
+							"Wohnungseigentum",
+							"Erbbaurecht",
+							"Vertretung / Vollmacht",
+							"Beteiligte im Ausland"
+						]
+					}
+				},
+				{
+					"key": "gwg_status",
+					"name": "GwG-Prüfung",
+					"type": "select",
+					"config": {
+						"options": [
+							"Offen",
+							"Geprüft",
+							"Auffällig"
+						]
+					}
+				},
+				{
+					"key": "entwurf_status",
+					"name": "Entwurf",
+					"type": "select",
+					"config": {
+						"options": [
+							"Offen",
+							"In Arbeit",
+							"An Beteiligte versandt",
+							"Freigegeben"
+						]
+					}
+				},
+				{
+					"key": "fehlende_angaben",
+					"name": "Fehlende Angaben",
+					"type": "long_text"
+				},
+				{
+					"key": "rueckfrage",
+					"name": "Rückfragetext (Entwurf)",
+					"type": "long_text"
+				},
+				{
+					"key": "zustaendig",
+					"name": "Zuständig",
+					"type": "text"
+				},
+				{
+					"key": "notizen",
+					"name": "Notizen",
+					"type": "long_text"
+				}
+			]
+		},
+		{
+			"key": "beteiligter",
+			"name": "Beteiligter",
+			"kind": "entity",
+			"description": "Verkäufer, Käufer, Vertreter oder Gläubiger — mit Identitäts- und Geldwäscheprüfung.",
+			"fields": [
+				{
+					"key": "rolle",
+					"name": "Rolle",
+					"type": "select",
+					"config": {
+						"options": [
+							"Verkäufer",
+							"Käufer",
+							"Vertreter",
+							"Gläubiger",
+							"Makler"
+						]
+					}
+				},
+				{
+					"key": "art",
+					"name": "Art",
+					"type": "select",
+					"config": {
+						"options": [
+							"Natürliche Person",
+							"Gesellschaft"
+						]
+					}
+				},
+				{
+					"key": "geburtsdatum",
+					"name": "Geburtsdatum",
+					"type": "date"
+				},
+				{
+					"key": "anschrift",
+					"name": "Anschrift",
+					"type": "long_text"
+				},
+				{
+					"key": "email",
+					"name": "E-Mail",
+					"type": "text"
+				},
+				{
+					"key": "steuer_id",
+					"name": "Steuer-ID",
+					"type": "text"
+				},
+				{
+					"key": "identitaet_geprueft",
+					"name": "Identität festgestellt",
+					"type": "boolean"
+				},
+				{
+					"key": "wirtschaftlich_berechtigter",
+					"name": "Wirtschaftlich Berechtigte",
+					"type": "long_text"
+				},
+				{
+					"key": "transparenzregister",
+					"name": "Transparenzregister",
+					"type": "select",
+					"config": {
+						"options": [
+							"Nicht erforderlich",
+							"Offen",
+							"Geprüft"
+						]
+					}
+				},
+				{
+					"key": "sanktionslisten",
+					"name": "Sanktionslisten",
+					"type": "select",
+					"config": {
+						"options": [
+							"Offen",
+							"Kein Treffer",
+							"Treffer prüfen"
+						]
+					}
+				}
+			]
+		},
+		{
+			"key": "grundstueck",
+			"name": "Grundstück",
+			"kind": "entity",
+			"description": "Das Kaufobjekt mit Grundbuchstelle, Eigentümer und Belastungen laut Grundbuchauszug.",
+			"fields": [
+				{
+					"key": "grundbuch_von",
+					"name": "Grundbuch von",
+					"type": "text"
+				},
+				{
+					"key": "blatt",
+					"name": "Blatt",
+					"type": "text"
+				},
+				{
+					"key": "flurstueck",
+					"name": "Flurstück",
+					"type": "text"
+				},
+				{
+					"key": "groesse_qm",
+					"name": "Größe (m²)",
+					"type": "number"
+				},
+				{
+					"key": "eigentuemer",
+					"name": "Eigentümer laut Grundbuch",
+					"type": "text"
+				},
+				{
+					"key": "abteilung_2",
+					"name": "Abteilung II (Lasten)",
+					"type": "long_text"
+				},
+				{
+					"key": "abteilung_3",
+					"name": "Abteilung III (Grundpfandrechte)",
+					"type": "long_text"
+				},
+				{
+					"key": "auszug_vom",
+					"name": "Grundbuchauszug vom",
+					"type": "date"
+				},
+				{
+					"key": "grundbuchauszug",
+					"name": "Grundbuchauszug",
+					"type": "attachment"
+				}
+			]
+		},
+		{
+			"key": "vollzugsschritt",
+			"name": "Vollzugsschritt",
+			"kind": "record",
+			"description": "Eine Anzeige, Genehmigung, Bescheinigung oder Eintragung mit Frist — das Datum ist die Frist bzw. Wiedervorlage.",
+			"fields": [
+				{
+					"key": "vorgang",
+					"name": "Vorgang",
+					"type": "relation",
+					"config": {
+						"target_record_type_key": "vorgang"
+					}
+				},
+				{
+					"key": "schritt",
+					"name": "Schritt",
+					"type": "select",
+					"config": {
+						"options": [
+							"Veräußerungsanzeige Finanzamt",
+							"Vorkaufsrecht Gemeinde",
+							"Behördliche Genehmigung",
+							"Löschungsunterlagen Gläubiger",
+							"Auflassungsvormerkung",
+							"Finanzierungsgrundschuld",
+							"Unbedenklichkeitsbescheinigung",
+							"Fälligkeitsmitteilung",
+							"Zahlungsnachweis",
+							"Eigentumsumschreibung",
+							"Löschung Vormerkung",
+							"Kostenberechnung"
+						]
+					}
+				},
+				{
+					"key": "stelle",
+					"name": "Stelle",
+					"type": "text"
+				},
+				{
+					"key": "system",
+					"name": "System",
+					"type": "select",
+					"config": {
+						"options": [
+							"XNP",
+							"eNova (XNP)",
+							"Grundbuchportal",
+							"RA-MICRO",
+							"Post / E-Mail"
+						]
+					}
+				},
+				{
+					"key": "treuhandauflage",
+					"name": "Treuhandauflage",
+					"type": "long_text"
+				},
+				{
+					"key": "anschreiben",
+					"name": "Anschreiben (Entwurf)",
+					"type": "long_text"
+				},
+				{
+					"key": "zustaendig",
+					"name": "Zuständig",
+					"type": "text"
+				}
+			]
+		},
+		{
+			"key": "eingang",
+			"name": "Eingang",
+			"kind": "record",
+			"description": "Was Mandanten oder Makler geschickt haben, und welcher Vorgang daraus wurde — der Audit-Trail der Datenerfassung.",
+			"fields": [
+				{
+					"key": "quelle",
+					"name": "Quelle",
+					"type": "select",
+					"config": {
+						"options": [
+							"E-Mail",
+							"Maklerformular",
+							"Online-Datenblatt",
+							"Telefonnotiz",
+							"Sonstiges"
+						]
+					}
+				},
+				{
+					"key": "angaben",
+					"name": "Angaben",
+					"type": "long_text",
+					"required": true
+				},
+				{
+					"key": "anhaenge",
+					"name": "Anhänge",
+					"type": "attachment"
+				},
+				{
+					"key": "vorgang",
+					"name": "Vorgang",
+					"type": "relation",
+					"config": {
+						"target_record_type_key": "vorgang"
+					}
+				}
+			]
+		},
+		{
+			"key": "vorlage",
+			"name": "Vorlage",
+			"kind": "entity",
+			"description": "Ihr Grundmuster für Kaufverträge und die wiederkehrenden Musterschreiben, aus denen der Agent Entwürfe vorbereitet.",
+			"fields": [
+				{
+					"key": "art",
+					"name": "Art",
+					"type": "select",
+					"config": {
+						"options": [
+							"Kaufvertrag-Grundmuster",
+							"Musterschreiben",
+							"Datenblatt"
+						]
+					}
+				},
+				{
+					"key": "verwendung",
+					"name": "Verwendung",
+					"type": "text"
+				},
+				{
+					"key": "platzhalter",
+					"name": "Platzhalter und Hinweise",
+					"type": "long_text"
+				},
+				{
+					"key": "datei",
+					"name": "Datei",
+					"type": "attachment"
+				}
+			]
+		}
+	],
+	"views": [
+		{
+			"key": "vorgaenge-board",
+			"name": "Vorgänge",
+			"type": "kanban",
+			"record_type_key": "vorgang",
+			"layout": {
+				"description": "Jeder Kaufvertrag als Karte, von Eingang bis Abschluss.",
+				"kanban_field": "status",
+				"kanban_columns": [
+					"Eingang",
+					"Prüfung",
+					"Vorprüfung",
+					"Entwurf",
+					"Beurkundung",
+					"Vollzug",
+					"Fälligkeit",
+					"Umschreibung",
+					"Abgeschlossen"
+				],
+				"columns": [
+					"title",
+					"value:aktenzeichen",
+					"value:kaufpreis",
+					"date",
+					"value:zustaendig"
+				],
+				"card_badge_field": "value:gwg_status",
+				"card_subtitle_field": "value:aktenzeichen"
+			}
+		},
+		{
+			"key": "vorgaenge",
+			"name": "Alle Vorgänge",
+			"type": "table",
+			"record_type_key": "vorgang",
+			"sort": {
+				"rules": [
+					{
+						"field": "date",
+						"direction": "asc"
+					}
+				]
+			},
+			"layout": {
+				"columns": [
+					"title",
+					"status",
+					"value:aktenzeichen",
+					"date",
+					"value:gwg_status",
+					"value:zustaendig"
+				],
+				"freeze_first_column": true
+			}
+		},
+		{
+			"key": "nachforderungen",
+			"name": "Nachforderungen",
+			"type": "table",
+			"record_type_key": "vorgang",
+			"filters": {
+				"conditions": [
+					{
+						"field": "status",
+						"operator": "not_equals",
+						"value": "Abgeschlossen"
+					},
+					{
+						"logic": "any",
+						"conditions": [
+							{
+								"field": "value:fehlende_angaben",
+								"operator": "is_not_empty"
+							},
+							{
+								"field": "value:gwg_status",
+								"operator": "not_equals",
+								"value": "Geprüft"
+							}
+						]
+					}
+				]
+			},
+			"layout": {
+				"description": "Vorgänge mit fehlenden Angaben oder offener Geldwäscheprüfung.",
+				"columns": [
+					"title",
+					"status",
+					"value:fehlende_angaben",
+					"value:rueckfrage",
+					"value:gwg_status",
+					"value:zustaendig"
+				],
+				"row_height": "tall"
+			}
+		},
+		{
+			"key": "vollzug-offen",
+			"name": "Fristen & Vollzug",
+			"type": "table",
+			"record_type_key": "vollzugsschritt",
+			"filters": {
+				"conditions": [
+					{
+						"field": "status",
+						"operator": "not_equals",
+						"value": "Erledigt"
+					}
+				]
+			},
+			"sort": {
+				"rules": [
+					{
+						"field": "date",
+						"direction": "asc"
+					}
+				]
+			},
+			"layout": {
+				"description": "Alle offenen Anzeigen, Genehmigungen und Eintragungen, die nächste Frist zuerst.",
+				"columns": [
+					"title",
+					"value:vorgang",
+					"value:schritt",
+					"status",
+					"date",
+					"value:stelle"
+				],
+				"group_by_fields": [
+					"value:vorgang"
+				]
+			}
+		},
+		{
+			"key": "vollzug-kalender",
+			"name": "Fristenkalender",
+			"type": "calendar",
+			"record_type_key": "vollzugsschritt",
+			"layout": {
+				"columns": [
+					"title",
+					"value:schritt",
+					"status",
+					"value:vorgang"
+				]
+			}
+		},
+		{
+			"key": "beteiligte",
+			"name": "Beteiligte",
+			"type": "table",
+			"record_type_key": "beteiligter",
+			"layout": {
+				"columns": [
+					"title",
+					"value:rolle",
+					"value:art",
+					"value:identitaet_geprueft",
+					"value:transparenzregister",
+					"value:sanktionslisten"
+				]
+			}
+		},
+		{
+			"key": "grundstuecke",
+			"name": "Grundstücke",
+			"type": "table",
+			"record_type_key": "grundstueck",
+			"layout": {
+				"columns": [
+					"title",
+					"value:grundbuch_von",
+					"value:blatt",
+					"value:flurstueck",
+					"value:eigentuemer",
+					"value:abteilung_3"
+				]
+			}
+		},
+		{
+			"key": "eingang-log",
+			"name": "Eingangs-Log",
+			"type": "table",
+			"record_type_key": "eingang",
+			"sort": {
+				"rules": [
+					{
+						"field": "date",
+						"direction": "desc"
+					}
+				]
+			},
+			"layout": {
+				"columns": [
+					"title",
+					"value:quelle",
+					"status",
+					"date",
+					"value:vorgang"
+				]
+			}
+		},
+		{
+			"key": "vorlagen",
+			"name": "Vorlagen",
+			"type": "table",
+			"record_type_key": "vorlage",
+			"layout": {
+				"columns": [
+					"title",
+					"value:art",
+					"value:verwendung",
+					"value:datei"
+				]
+			}
+		},
+		{
+			"key": "unterlagen-einreichen",
+			"name": "Unterlagen einreichen",
+			"type": "form",
+			"record_type_key": "eingang",
+			"layout": {
+				"form_intro": "Für Mandanten und Makler: Beschreiben Sie Objekt, Beteiligte und Kaufpreis so gut Sie können und hängen Sie vorhandene Unterlagen an. Fehlendes fragen wir gezielt nach.",
+				"columns": [
+					"title",
+					"value:quelle",
+					"value:angaben",
+					"value:anhaenge"
+				]
+			}
+		},
+		{
+			"key": "vollzugsschritt-erfassen",
+			"name": "Vollzugsschritt erfassen",
+			"type": "form",
+			"record_type_key": "vollzugsschritt",
+			"layout": {
+				"columns": [
+					"title",
+					"value:vorgang",
+					"value:schritt",
+					"status",
+					"date",
+					"value:stelle"
+				]
+			}
+		}
+	],
+	"records": [
+		{
+			"key": "grundstueck-linden",
+			"record_type_key": "grundstueck",
+			"title": "Lindenstraße 12, Beispielstadt",
+			"values": {
+				"grundbuch_von": "Beispielstadt",
+				"blatt": "4711",
+				"flurstueck": "123/4",
+				"groesse_qm": 612,
+				"eigentuemer": "Erika Beispiel",
+				"abteilung_2": "Keine Eintragungen",
+				"abteilung_3": "Lfd. Nr. 1: Grundschuld 180.000 € für die Beispielbank eG",
+				"auszug_vom": 1787875200
+			}
+		},
+		{
+			"key": "beteiligter-erika",
+			"record_type_key": "beteiligter",
+			"title": "Erika Beispiel",
+			"values": {
+				"rolle": "Verkäufer",
+				"art": "Natürliche Person",
+				"identitaet_geprueft": true,
+				"transparenzregister": "Nicht erforderlich",
+				"sanktionslisten": "Kein Treffer"
+			}
+		},
+		{
+			"key": "beteiligter-wohnbau",
+			"record_type_key": "beteiligter",
+			"title": "Beispiel Wohnbau GmbH",
+			"values": {
+				"rolle": "Käufer",
+				"art": "Gesellschaft",
+				"identitaet_geprueft": true,
+				"wirtschaftlich_berechtigter": "Max Muster (60 % der Anteile) — laut Gesellschafterliste und Transparenzregister",
+				"transparenzregister": "Geprüft",
+				"sanktionslisten": "Kein Treffer"
+			}
+		},
+		{
+			"key": "beteiligter-bank",
+			"record_type_key": "beteiligter",
+			"title": "Beispielbank eG",
+			"values": {
+				"rolle": "Gläubiger",
+				"art": "Gesellschaft"
+			}
+		},
+		{
+			"key": "vorgang-linden",
+			"record_type_key": "vorgang",
+			"title": "Kaufvertrag Lindenstraße 12",
+			"status": "Vollzug",
+			"date": 1790640000,
+			"values": {
+				"aktenzeichen": "N-2026-0412",
+				"urkundennummer": "UVZ 1834/2026",
+				"grundstueck": {
+					"record_key": "grundstueck-linden"
+				},
+				"verkaeufer": [
+					{
+						"record_key": "beteiligter-erika"
+					}
+				],
+				"kaeufer": [
+					{
+						"record_key": "beteiligter-wohnbau"
+					}
+				],
+				"makler": "Beispiel Immobilien",
+				"kaufpreis": 385000,
+				"finanzierung": true,
+				"sonderkonstellationen": [
+					"Gesellschaft beteiligt"
+				],
+				"gwg_status": "Geprüft",
+				"entwurf_status": "Freigegeben",
+				"zustaendig": "Frau Weber"
+			}
+		},
+		{
+			"key": "vorgang-am-hang",
+			"record_type_key": "vorgang",
+			"title": "Kaufvertrag Am Hang 3",
+			"status": "Prüfung",
+			"values": {
+				"aktenzeichen": "N-2026-0437",
+				"makler": "Beispiel Immobilien",
+				"kaufpreis": 249000,
+				"gwg_status": "Offen",
+				"entwurf_status": "Offen",
+				"fehlende_angaben": "- Geburtsdatum und Steuer-ID des Käufers\n- Grundbuchblatt des Objekts\n- Angabe, ob eine Finanzierungsgrundschuld bestellt werden soll",
+				"rueckfrage": "Sehr geehrte Damen und Herren,\n\nfür die Vorbereitung des Kaufvertrags Am Hang 3 fehlen uns noch: Geburtsdatum und Steuer-ID des Käufers, das Grundbuchblatt sowie die Angabe, ob der Kaufpreis finanziert wird. Bitte ergänzen Sie diese Angaben über unser Online-Formular.\n\nMit freundlichen Grüßen",
+				"zustaendig": "Herr Kaya"
+			}
+		},
+		{
+			"key": "schritt-veraeusserungsanzeige",
+			"record_type_key": "vollzugsschritt",
+			"title": "Veräußerungsanzeige an das Finanzamt",
+			"status": "Erledigt",
+			"date": 1790812800,
+			"values": {
+				"vorgang": {
+					"record_key": "vorgang-linden"
+				},
+				"schritt": "Veräußerungsanzeige Finanzamt",
+				"stelle": "Finanzamt Beispielstadt",
+				"system": "eNova (XNP)",
+				"zustaendig": "Frau Weber"
+			}
+		},
+		{
+			"key": "schritt-vormerkung",
+			"record_type_key": "vollzugsschritt",
+			"title": "Eintragung der Auflassungsvormerkung",
+			"status": "Eingegangen",
+			"date": 1791244800,
+			"values": {
+				"vorgang": {
+					"record_key": "vorgang-linden"
+				},
+				"schritt": "Auflassungsvormerkung",
+				"stelle": "Grundbuchamt Beispielstadt",
+				"system": "XNP",
+				"zustaendig": "Frau Weber"
+			}
+		},
+		{
+			"key": "schritt-vorkaufsrecht",
+			"record_type_key": "vollzugsschritt",
+			"title": "Negativzeugnis zum Vorkaufsrecht",
+			"status": "Angefordert",
+			"date": 1792454400,
+			"values": {
+				"vorgang": {
+					"record_key": "vorgang-linden"
+				},
+				"schritt": "Vorkaufsrecht Gemeinde",
+				"stelle": "Stadt Beispielstadt, Bauordnungsamt",
+				"system": "Post / E-Mail",
+				"zustaendig": "Frau Weber"
+			}
+		},
+		{
+			"key": "schritt-loeschung",
+			"record_type_key": "vollzugsschritt",
+			"title": "Löschungsbewilligung Beispielbank",
+			"status": "Angefordert",
+			"date": 1791936000,
+			"values": {
+				"vorgang": {
+					"record_key": "vorgang-linden"
+				},
+				"schritt": "Löschungsunterlagen Gläubiger",
+				"stelle": "Beispielbank eG",
+				"system": "Post / E-Mail",
+				"treuhandauflage": "Verwendung nur gegen Zahlung des Ablösebetrags von 142.300 € auf das Konto der Bank.",
+				"anschreiben": "Sehr geehrte Damen und Herren,\n\nin der Grundstückssache Lindenstraße 12, Grundbuch von Beispielstadt Blatt 4711, bitten wir um Übersendung der Löschungsbewilligung für die in Abteilung III lfd. Nr. 1 eingetragene Grundschuld zu treuen Händen sowie um Mitteilung des Ablösebetrags.\n\nMit freundlichen Grüßen",
+				"zustaendig": "Frau Weber"
+			}
+		},
+		{
+			"key": "schritt-unbedenklichkeit",
+			"record_type_key": "vollzugsschritt",
+			"title": "Unbedenklichkeitsbescheinigung abwarten",
+			"status": "Offen",
+			"date": 1793577600,
+			"values": {
+				"vorgang": {
+					"record_key": "vorgang-linden"
+				},
+				"schritt": "Unbedenklichkeitsbescheinigung",
+				"stelle": "Finanzamt Beispielstadt",
+				"system": "XNP",
+				"zustaendig": "Frau Weber"
+			}
+		},
+		{
+			"key": "schritt-faelligkeit",
+			"record_type_key": "vollzugsschritt",
+			"title": "Fälligkeitsmitteilung an den Käufer",
+			"status": "Offen",
+			"date": 1792713600,
+			"values": {
+				"vorgang": {
+					"record_key": "vorgang-linden"
+				},
+				"schritt": "Fälligkeitsmitteilung",
+				"stelle": "Beispiel Wohnbau GmbH (Kenntnis: Verkäuferin)",
+				"system": "Post / E-Mail",
+				"zustaendig": "Frau Weber"
+			}
+		},
+		{
+			"key": "eingang-am-hang",
+			"record_type_key": "eingang",
+			"title": "Makler-E-Mail: Am Hang 3",
+			"status": "Verarbeitet",
+			"date": 1791158400,
+			"values": {
+				"quelle": "E-Mail",
+				"angaben": "Guten Tag, anbei die Daten für den Verkauf Am Hang 3: Verkäufer Familie Beispiel, Käufer Herr Muster, Kaufpreis 249.000 €. Termin wäre Ende Oktober gewünscht. Viele Grüße, Beispiel Immobilien",
+				"vorgang": {
+					"record_key": "vorgang-am-hang"
+				}
+			}
+		},
+		{
+			"key": "vorlage-grundmuster",
+			"record_type_key": "vorlage",
+			"title": "Grundmuster Grundstückskaufvertrag",
+			"values": {
+				"art": "Kaufvertrag-Grundmuster",
+				"verwendung": "Basis für jeden Vertragsentwurf",
+				"platzhalter": "Laden Sie hier Ihr eigenes Grundmuster hoch. Der Agent füllt Beteiligte, Grundbuchstelle, Kaufpreis und Fälligkeitsvoraussetzungen aus dem Vorgang und markiert Sonderkonstellationen, die eine Anpassung brauchen."
+			}
+		},
+		{
+			"key": "vorlage-loeschung",
+			"record_type_key": "vorlage",
+			"title": "Anforderung Löschungsunterlagen",
+			"values": {
+				"art": "Musterschreiben",
+				"verwendung": "Vollzugsschritt „Löschungsunterlagen Gläubiger“",
+				"platzhalter": "Platzhalter: Gläubiger, Objekt, Grundbuch von / Blatt, Abteilung und lfd. Nummer, Treuhandauflage."
+			}
+		},
+		{
+			"key": "vorlage-faelligkeit",
+			"record_type_key": "vorlage",
+			"title": "Fälligkeitsmitteilung",
+			"values": {
+				"art": "Musterschreiben",
+				"verwendung": "Vollzugsschritt „Fälligkeitsmitteilung“",
+				"platzhalter": "Platzhalter: Käufer, Kaufpreis, Ablösebeträge der Gläubiger mit Konten, Restbetrag an Verkäufer, Zahlungsfrist."
+			}
+		}
+	],
+	"version": "1.0.0"
+}

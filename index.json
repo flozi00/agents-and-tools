@@ -241,5 +241,14 @@
       "requirements": "requests",
       "format": "primeline-native"
     }
+  ],
+  "apps": [
+    {
+      "id": "notariat-grundstueckskauf",
+      "name": "Notary: Property Purchase",
+      "description": "Run notarial property purchases from intake to transfer of ownership: an agent reads client and broker data, lists missing details, fills the contract template and watches every completion deadline.",
+      "version": "1.0.0",
+      "category": "Legal"
+    }
   ]
 }
