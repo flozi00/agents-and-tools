@@ -1,0 +1,1013 @@
+{
+	"id": "steuerkanzlei-pruefplattform",
+	"name": "Tax firm: Plausibility & review platform",
+	"description": "Run plausibility checks on your own tax, accounting, payroll and year-end data: saved check rules and prior-year comparisons flag the anomalies, the assistant drafts a review note with the triggering rule and the numbers, and the professional decision stays with your team.",
+	"category": "Tax",
+	"schema_version": 1,
+	"tags": ["Steuerkanzlei", "Plausibilitätsprüfung", "Prüfengine", "AI-ready"],
+	"features": [
+		"Prüfläufe je Mandant und Bereich (Fibu, Lohn, Steuererklärung, EÜR, Jahresabschluss)",
+		"Prüfregeln mit Schwellenwerten: Vorjahresvergleich, Kennzahlen, Plausibilitätsregeln",
+		"Prüfhinweise mit auslösender Regel, den zugrunde liegenden Zahlen und dem Prüfauftrag",
+		"Beleg- und Kontierungsprüfungen: Vollständigkeit und § 13b UStG / igE als einschaltbare Prüfregeln",
+		"Berechtigte Wissenssuche: Kanzleihandbuch, Checklisten, Arbeitsanweisungen",
+		"Prüfbericht als Checkliste für die fachliche Prüfung durch den Steuerberater",
+		"Wöchentliche Prüfübersicht als Automatisierung mit Ampel je Prüflauf"
+	],
+	"outcomes": [
+		"Einen Export aus dem Kanzleisystem einlesen — die Prüf-engine prüft gegen die hinterlegten Regeln",
+		"Jeder Prüfhinweis nennt die Regel, die ihn ausgelöst hat, und die Zahlen dahinter",
+		"Der Assistent formuliert den Prüfhinweis, die fachliche Bewertung bleibt beim Steuerberater",
+		"Der Prüflauf endet mit einer nachvollziehbaren Prüfliste, nicht mit einer automatischen Entscheidung"
+	],
+	"project": {
+		"name": "Steuerkanzlei: Plausibilitäts- und Prüfplattform",
+		"description": "Prüfengine für Steuererklärung, Fibu, Lohn, EÜR und Jahresabschluss: Regeln, Vorjahresvergleiche und Kennzahlen finden die Auffälligkeiten, der Assistent formuliert die Prüfhinweise, die fachliche Entscheidung bleibt beim Steuerberater.",
+		"meta": {
+			"app_builder": {
+				"enabled": true,
+				"title": "Steuerkanzlei: Plausibilitäts- und Prüfplattform",
+				"summary": "Vom Export zur Prüfliste: Prüfläufe, Prüfregeln, Prüfhinweise und Prüfbericht an einem Ort — mit fachlicher Prüfung durch den Steuerberater.",
+				"primary_view_key": "prueflaeufe-board",
+				"view_keys": [
+					"prueflaeufe-board",
+					"prueflaeufe",
+					"prueflauf-kalender",
+					"pruefhinweise",
+					"pruefhinweise-erheblich",
+					"pruefregeln",
+					"mandanten",
+					"dateneingaenge",
+					"pruefhinweis-erfassen",
+					"prueflauf-eroeffnen"
+				],
+				"navigation_groups": [
+					{
+						"label": "Prüfläufe",
+						"view_keys": [
+							"prueflaeufe-board",
+							"prueflaeufe",
+							"prueflauf-kalender",
+							"prueflauf-eroeffnen"
+						]
+					},
+					{
+						"label": "Prüfhinweise",
+						"view_keys": ["pruefhinweise", "pruefhinweise-erheblich", "pruefhinweis-erfassen"]
+					},
+					{
+						"label": "Regelwerk",
+						"view_keys": ["pruefregeln", "dateneingaenge"]
+					},
+					{
+						"label": "Stammdaten",
+						"view_keys": ["mandanten"]
+					}
+				],
+				"accent": "green",
+				"home_mode": "dashboard",
+				"allow_submissions": false,
+				"dashboard_metrics": [
+					{
+						"id": "prueflaeufe-offen",
+						"label": "Offene Prüfläufe",
+						"aggregate": "count",
+						"record_type_key": "prueflauf",
+						"conditions": [
+							{ "field": "status", "operator": "not_equals", "value": "Abgeschlossen" }
+						]
+					},
+					{
+						"id": "hinweise-offen",
+						"label": "Ungeklärte Prüfhinweise",
+						"aggregate": "count",
+						"record_type_key": "pruefhinweis",
+						"conditions": [{ "field": "status", "operator": "not_equals", "value": "Erledigt" }]
+					},
+					{
+						"id": "hinweise-erheblich",
+						"label": "Erhebliche Abweichungen",
+						"aggregate": "count",
+						"record_type_key": "pruefhinweis",
+						"conditions": [
+							{ "field": "value:schwere", "operator": "equals", "value": "Erheblich" },
+							{ "field": "status", "operator": "not_equals", "value": "Erledigt" }
+						]
+					},
+					{
+						"id": "fachpruefung-faellig",
+						"label": "Zur fachlichen Prüfung fällig",
+						"aggregate": "count",
+						"record_type_key": "prueflauf",
+						"conditions": [{ "field": "status", "operator": "equals", "value": "Bericht erstellt" }]
+					},
+					{
+						"id": "regeln-aktiv",
+						"label": "Aktive Prüfregeln",
+						"aggregate": "count",
+						"record_type_key": "pruefregel",
+						"conditions": [{ "field": "value:aktiv", "operator": "equals", "value": true }]
+					}
+				],
+				"dashboard_charts": [
+					{
+						"id": "prueflaeufe-status",
+						"label": "Prüfläufe nach Status",
+						"type": "bar",
+						"aggregate": "count",
+						"record_type_key": "prueflauf",
+						"group_by": ["status"],
+						"limit": 6
+					},
+					{
+						"id": "hinweise-bereich",
+						"label": "Prüfhinweise nach Bereich",
+						"type": "bar",
+						"aggregate": "count",
+						"record_type_key": "pruefhinweis",
+						"group_by": ["value:bereich"],
+						"limit": 8
+					},
+					{
+						"id": "hinweise-schwere",
+						"label": "Prüfhinweise nach Schwere",
+						"type": "bar",
+						"aggregate": "count",
+						"record_type_key": "pruefhinweis",
+						"group_by": ["value:schwere"],
+						"limit": 6
+					}
+				],
+				"dashboard_filters": [
+					{
+						"id": "bereich",
+						"label": "Prüfbereich",
+						"field": "value:bereich",
+						"operator": "equals",
+						"options": ["Steuererklärung", "Finanzbuchhaltung", "Lohn", "EÜR", "Jahresabschluss"]
+					}
+				],
+				"dashboard_notes": [
+					{
+						"id": "pruefprinzip",
+						"title": "So arbeitet die Prüfengine",
+						"body": "Erst die Regeln, dann das Sprachmodell: Die Prüfengine prüft mit hinterlegten Regeln, Kennzahlen und Vorjahresvergleichen — die Auffälligkeit rechnet die Engine, nicht das Sprachmodell. Der Assistent formuliert daraus einen verständlichen Prüfhinweis mit der auslösenden Regel und den Zahlen. Die fachliche Bewertung und die Entscheidung bleiben immer beim Steuerberater.",
+						"style": "info"
+					},
+					{
+						"id": "datenquellen",
+						"title": "Kanzleisystem bleibt führend",
+						"body": "Die Plattform ersetzt kein Kanzleisystem. Daten kommen als Exporte herein (Fibu, Lohn, Steuer, Jahresabschluss, DMS), die Prüfengine liest und prüft sie dort. Die Buchung, die Meldung und die Fristenbearbeitung bleiben im Kanzleisystem — die Plattform bereitet vor, sie entscheidet nicht über Mandantendaten.",
+						"style": "info"
+					},
+					{
+						"id": "pulse-setup",
+						"title": "Wöchentliche Prüfübersicht",
+						"body": "Unter Automationen eine Prompt-Automation anlegen, montags 07:30, mit dieser App verknüpfen. Prompt-Vorlage: „Erstelle die wöchentliche Prüfübersicht für diese App: Prüfläufe mit Status „Bericht erstellt“, offene Prüfhinweise je Mandant mit auslösender Regel und Zahlen, und Prüfhinweise, die eine fachliche Entscheidung brauchen. Nenne je Punkt Mandant, Bereich und nächsten Schritt.“",
+						"style": "info"
+					}
+				],
+				"dashboard_sections": [
+					{
+						"id": "prueflage",
+						"title": "Prüflage",
+						"metric_ids": [
+							"prueflaeufe-offen",
+							"hinweise-offen",
+							"hinweise-erheblich",
+							"fachpruefung-faellig",
+							"regeln-aktiv"
+						]
+					},
+					{
+						"id": "pruefuebersicht",
+						"title": "Prüfübersicht",
+						"chart_ids": ["prueflaeufe-status", "hinweise-bereich", "hinweise-schwere"]
+					},
+					{
+						"id": "arbeitsweise",
+						"title": "Arbeitsweise",
+						"note_ids": ["pruefprinzip", "datenquellen", "pulse-setup"]
+					}
+				],
+				"actions": [
+					{
+						"id": "prueflauf-offen",
+						"label": "Prüflauf eröffnen",
+						"type": "view",
+						"view_key": "prueflauf-eroeffnen",
+						"style": "primary"
+					},
+					{
+						"id": "pruefhinweis-pruefen",
+						"label": "Zur fachlichen Prüfung",
+						"type": "record_update",
+						"scope": "record",
+						"style": "primary",
+						"conditions": [
+							{ "field": "value:bereich", "operator": "is_not_empty" },
+							{ "field": "status", "operator": "equals", "value": "Offen" }
+						],
+						"patch": { "status": "In Prüfung" }
+					},
+					{
+						"id": "pruefhinweis-erklaert",
+						"label": "Geklärt",
+						"type": "record_update",
+						"scope": "record",
+						"conditions": [
+							{ "field": "value:bereich", "operator": "is_not_empty" },
+							{ "field": "status", "operator": "equals", "value": "In Prüfung" }
+						],
+						"patch": { "status": "Erledigt" }
+					},
+					{
+						"id": "prueflauf-fachpruefung",
+						"label": "Fachliche Prüfung",
+						"type": "record_update",
+						"scope": "record",
+						"conditions": [
+							{ "field": "status", "operator": "equals", "value": "Bericht erstellt" }
+						],
+						"patch": { "status": "Fachlich geprüft" }
+					}
+				]
+			},
+			"pruefplattform": {
+				"case_record_type_key": "prueflauf",
+				"party_record_type_key": "mandant",
+				"finding_record_type_key": "pruefhinweis",
+				"rule_record_type_key": "pruefregel",
+				"input_record_type_key": "dateneingang",
+				"phases": ["Offen", "In Prüfung", "Bericht erstellt", "Fachlich geprüft", "Abgeschlossen"],
+				"agent_rules": "Neue Dateneingänge (Kanzleisystem-Exporte) lesen: Prüflauf je Mandant und Bereich anlegen, Dateneingang als Record mit Relation speichern. Erst die hinterlegten Prüfregeln und Vorjahresvergleiche anwenden, dann den Prüfhinweis anlegen — jeder Hinweis nennt die auslösende Regel, die Zahlen und den konkreten Prüfauftrag. Bei Unklarheiten nie raten, sondern den fehlenden Punkt als Rückfrage an den Mandanten formulieren. Die fachliche Bewertung und die Entscheidung bleiben immer beim Steuerberater — die Prüfengine bereitet vor, sie entscheidet nicht. Prüfhinweise nie an externe Dienste übergeben; nur abstrahierte Fachfragen an Fachwissensdienste.",
+				"pulse": {
+					"suggested_rrule": "FREQ=WEEKLY;BYDAY=MO;BYHOUR=7;BYMINUTE=30",
+					"prompt": "Erstelle die wöchentliche Prüfübersicht für diese App: Prüfläufe mit Status „Bericht erstellt“, offene Prüfhinweise je Mandant mit auslösender Regel und Zahlen, und Prüfhinweise, die eine fachliche Entscheidung brauchen. Nenne je Punkt Mandant, Bereich und nächsten Schritt."
+				}
+			}
+		}
+	},
+	"record_types": [
+		{
+			"key": "prueflauf",
+			"name": "Prüflauf",
+			"kind": "record",
+			"description": "Ein Prüflauf: ein Mandant, ein Prüfbereich (Fibu, Lohn, Steuererklärung, EÜR, Jahresabschluss), ein Prüfzeitraum. Der Status zeigt, wie weit die Prüfung gediehen ist.",
+			"fields": [
+				{
+					"key": "mandant",
+					"name": "Mandant",
+					"type": "relation",
+					"config": { "target_record_type_key": "mandant" }
+				},
+				{
+					"key": "bereich",
+					"name": "Prüfbereich",
+					"type": "select",
+					"config": {
+						"options": ["Steuererklärung", "Finanzbuchhaltung", "Lohn", "EÜR", "Jahresabschluss"]
+					}
+				},
+				{
+					"key": "pruefzeitraum",
+					"name": "Prüfzeitraum",
+					"type": "text"
+				},
+				{
+					"key": "pruefbericht",
+					"name": "Prüfbericht",
+					"type": "long_text"
+				},
+				{
+					"key": "fachliche_pruefung",
+					"name": "Fachliche Prüfung",
+					"type": "long_text"
+				},
+				{
+					"key": "zustaendig",
+					"name": "Zuständig",
+					"type": "text"
+				}
+			]
+		},
+		{
+			"key": "pruefhinweis",
+			"name": "Prüfhinweis",
+			"kind": "record",
+			"description": "Eine Auffälligkeit, die eine Prüfregel oder ein Vorjahresvergleich gefunden hat — mit der auslösenden Regel, den Zahlen und dem konkreten Prüfauftrag.",
+			"fields": [
+				{
+					"key": "prueflauf",
+					"name": "Prüflauf",
+					"type": "relation",
+					"config": { "target_record_type_key": "prueflauf" }
+				},
+				{
+					"key": "bereich",
+					"name": "Bereich",
+					"type": "select",
+					"config": {
+						"options": ["Steuererklärung", "Finanzbuchhaltung", "Lohn", "EÜR", "Jahresabschluss"]
+					}
+				},
+				{
+					"key": "pruefregel",
+					"name": "Auslösende Regel",
+					"type": "relation",
+					"config": { "target_record_type_key": "pruefregel" }
+				},
+				{
+					"key": "position",
+					"name": "Betroffene Position",
+					"type": "text"
+				},
+				{
+					"key": "vorjahreswert",
+					"name": "Wert Vorjahr (€)",
+					"type": "number"
+				},
+				{
+					"key": "aktueller_wert",
+					"name": "Aktueller Wert (€)",
+					"type": "number"
+				},
+				{
+					"key": "veraenderung",
+					"name": "Veränderung",
+					"type": "text"
+				},
+				{
+					"key": "schwere",
+					"name": "Schwere",
+					"type": "select",
+					"config": { "options": ["Hinweis", "Auffällig", "Erheblich"] }
+				},
+				{
+					"key": "pruefauftrag",
+					"name": "Prüfauftrag",
+					"type": "long_text"
+				},
+				{
+					"key": "wuerdigung",
+					"name": "Fachliche Würdigung",
+					"type": "long_text"
+				},
+				{
+					"key": "zustaendig",
+					"name": "Zuständig",
+					"type": "text"
+				}
+			]
+		},
+		{
+			"key": "pruefregel",
+			"name": "Prüfregel",
+			"kind": "entity",
+			"description": "Eine hinterlegte Prüfregel mit Prüfschritt und Schwellenwert — das Regelwerk, gegen das die Prüfengine prüft.",
+			"fields": [
+				{
+					"key": "bereich",
+					"name": "Bereich",
+					"type": "select",
+					"config": {
+						"options": [
+							"Steuererklärung",
+							"Finanzbuchhaltung",
+							"Lohn",
+							"EÜR",
+							"Jahresabschluss",
+							"Allgemein"
+						]
+					}
+				},
+				{
+					"key": "prueflogik",
+					"name": "Prüflogik",
+					"type": "long_text"
+				},
+				{
+					"key": "schwellenwert",
+					"name": "Schwellenwert",
+					"type": "text"
+				},
+				{
+					"key": "quelle",
+					"name": "Quelle der Regel",
+					"type": "text"
+				},
+				{
+					"key": "aktiv",
+					"name": "Aktiv",
+					"type": "boolean"
+				}
+			]
+		},
+		{
+			"key": "mandant",
+			"name": "Mandant",
+			"kind": "entity",
+			"description": "Der Mandant mit Branche, Rechtsform und den Besonderheiten, die bei der Prüfung zu beachten sind.",
+			"fields": [
+				{
+					"key": "mandantentyp",
+					"name": "Mandantentyp",
+					"type": "select",
+					"config": {
+						"options": ["Privatperson", "Personengesellschaft", "Kapitalgesellschaft", "Verein"]
+					}
+				},
+				{
+					"key": "branche",
+					"name": "Branche",
+					"type": "text"
+				},
+				{
+					"key": "besonderheiten",
+					"name": "Zu beachten",
+					"type": "long_text"
+				},
+				{
+					"key": "naechste_pruefung",
+					"name": "Nächste Prüfung",
+					"type": "text"
+				}
+			]
+		},
+		{
+			"key": "dateneingang",
+			"name": "Dateneingang",
+			"kind": "record",
+			"description": "Was aus dem Kanzleisystem oder dem Kanzlei-Wiki eingewandert ist — Export, Anhang und der Vermerk, was daraus wurde.",
+			"fields": [
+				{
+					"key": "quelle",
+					"name": "Quelle",
+					"type": "select",
+					"config": {
+						"options": [
+							"Kanzleisystem-Export Fibu",
+							"Kanzleisystem-Export Lohn",
+							"Kanzleisystem-Export Steuer",
+							"Kanzleisystem-Export Jahresabschluss",
+							"Kanzlei-Wiki",
+							"Datei-Upload"
+						]
+					}
+				},
+				{
+					"key": "zeitraum",
+					"name": "Zeitraum",
+					"type": "text"
+				},
+				{
+					"key": "inhalt",
+					"name": "Inhalt",
+					"type": "long_text"
+				},
+				{
+					"key": "anhaenge",
+					"name": "Anhänge",
+					"type": "attachment"
+				},
+				{
+					"key": "prueflauf",
+					"name": "Prüflauf",
+					"type": "relation",
+					"config": { "target_record_type_key": "prueflauf" }
+				}
+			]
+		}
+	],
+	"views": [
+		{
+			"key": "prueflaeufe-board",
+			"name": "Prüfläufe",
+			"type": "kanban",
+			"record_type_key": "prueflauf",
+			"layout": {
+				"description": "Jeder Prüflauf als Karte — von der Erfassung bis zur fachlichen Prüfung.",
+				"kanban_field": "status",
+				"kanban_columns": [
+					"Offen",
+					"In Prüfung",
+					"Bericht erstellt",
+					"Fachlich geprüft",
+					"Abgeschlossen"
+				],
+				"columns": ["title", "value:mandant", "value:bereich", "status", "value:pruefzeitraum"],
+				"card_badge_field": "value:schwere",
+				"card_subtitle_field": "value:bereich"
+			}
+		},
+		{
+			"key": "prueflaeufe",
+			"name": "Alle Prüfläufe",
+			"type": "table",
+			"record_type_key": "prueflauf",
+			"sort": { "rules": [{ "field": "date", "direction": "desc" }] },
+			"layout": {
+				"columns": [
+					"title",
+					"value:mandant",
+					"value:bereich",
+					"status",
+					"value:pruefzeitraum",
+					"value:zustaendig"
+				],
+				"freeze_first_column": true
+			}
+		},
+		{
+			"key": "prueflauf-kalender",
+			"name": "Prüfkalender",
+			"type": "calendar",
+			"record_type_key": "prueflauf",
+			"layout": {
+				"columns": ["title", "value:mandant", "value:bereich", "status"]
+			}
+		},
+		{
+			"key": "pruefhinweise",
+			"name": "Prüfhinweise",
+			"type": "table",
+			"record_type_key": "pruefhinweis",
+			"filters": {
+				"conditions": [{ "field": "status", "operator": "not_equals", "value": "Erledigt" }]
+			},
+			"layout": {
+				"description": "Offene Auffälligkeiten mit der auslösenden Regel und den Zahlen.",
+				"columns": [
+					"title",
+					"value:prueflauf",
+					"value:position",
+					"value:schwere",
+					"status",
+					"value:pruefauftrag"
+				],
+				"row_height": "tall"
+			}
+		},
+		{
+			"key": "pruefhinweise-erheblich",
+			"name": "Erhebliche Abweichungen",
+			"type": "table",
+			"record_type_key": "pruefhinweis",
+			"filters": {
+				"conditions": [
+					{ "field": "value:schwere", "operator": "equals", "value": "Erheblich" },
+					{ "field": "status", "operator": "not_equals", "value": "Erledigt" }
+				]
+			},
+			"sort": { "rules": [{ "field": "value:schwere", "direction": "asc" }] },
+			"layout": {
+				"description": "Nur die Abweichungen, die eine fachliche Entscheidung brauchen — mit Prüfauftrag.",
+				"columns": [
+					"title",
+					"value:prueflauf",
+					"value:position",
+					"value:schwere",
+					"status",
+					"value:pruefauftrag"
+				],
+				"row_height": "tall"
+			}
+		},
+		{
+			"key": "pruefregeln",
+			"name": "Prüfregeln",
+			"type": "table",
+			"record_type_key": "pruefregel",
+			"layout": {
+				"columns": [
+					"title",
+					"value:bereich",
+					"value:prueflogik",
+					"value:schwellenwert",
+					"value:aktiv"
+				],
+				"row_height": "tall"
+			}
+		},
+		{
+			"key": "mandanten",
+			"name": "Mandanten",
+			"type": "table",
+			"record_type_key": "mandant",
+			"layout": {
+				"columns": ["title", "value:mandantentyp", "value:branche", "value:besonderheiten"]
+			}
+		},
+		{
+			"key": "dateneingaenge",
+			"name": "Dateneingänge",
+			"type": "table",
+			"record_type_key": "dateneingang",
+			"sort": { "rules": [{ "field": "date", "direction": "desc" }] },
+			"layout": {
+				"columns": ["title", "value:quelle", "value:zeitraum", "status", "value:prueflauf"]
+			}
+		},
+		{
+			"key": "pruefhinweis-erfassen",
+			"name": "Prüfhinweis erfassen",
+			"type": "form",
+			"record_type_key": "pruefhinweis",
+			"layout": {
+				"form_intro": "Tragen Sie die Auffälligkeit mit der auslösenden Regel und den Zahlen ein. Die fachliche Bewertung und die Entscheidung bleiben bei Ihnen.",
+				"columns": [
+					"title",
+					"value:prueflauf",
+					"value:bereich",
+					"value:pruefregel",
+					"value:schwere",
+					"value:pruefauftrag"
+				]
+			}
+		},
+		{
+			"key": "prueflauf-eroeffnen",
+			"name": "Prüflauf eröffnen",
+			"type": "form",
+			"record_type_key": "prueflauf",
+			"layout": {
+				"form_intro": "Eröffnen Sie einen Prüflauf für einen Mandanten und einen Prüfbereich. Die Prüfregeln und Vorjahresvergleiche laufen gegen den angelegten Prüflauf.",
+				"columns": [
+					"title",
+					"value:mandant",
+					"value:bereich",
+					"value:pruefzeitraum",
+					"value:zustaendig"
+				]
+			}
+		}
+	],
+	"records": [
+		{
+			"key": "mandant-bau-gmbh",
+			"record_type_key": "mandant",
+			"title": "Beispiel Bau GmbH",
+			"values": {
+				"mandantentyp": "Kapitalgesellschaft",
+				"branche": "Bau (Hochbau)",
+				"besonderheiten": "Gesellschafter-Forderungen wechselten in den Vorjahren stark; Sperrfrist bei Gesellschafterdarlehen beachten.",
+				"naechste_pruefung": "Jahresabschluss 2026, Prüfung der Vorjahresabweichungen"
+			}
+		},
+		{
+			"key": "mandant-handwerk-gmbh-co",
+			"record_type_key": "mandant",
+			"title": "Muster Handwerk GmbH & Co. KG",
+			"values": {
+				"mandantentyp": "Personengesellschaft",
+				"branche": "Handwerk",
+				"besonderheiten": "Komplementär mit hohem Privatanteil; Lohn- und Gehaltsabrechnungen mit Einmalzahlungen.",
+				"naechste_pruefung": "Lohn 2026, Einmalzahlungen und Vorjahresvergleich"
+			}
+		},
+		{
+			"key": "mandant-notar",
+			"record_type_key": "mandant",
+			"title": "Beispiel Notar GmbH",
+			"values": {
+				"mandantentyp": "Kapitalgesellschaft",
+				"branche": "Sonstige Dienstleistungen",
+				"besonderheiten": "Hohe Schwankungen bei sonstigem betrieblichem Aufwand; Vorjahresvergleich erforderlich.",
+				"naechste_pruefung": "EÜR 2026, Vorjahresvergleich der Aufwendungen"
+			}
+		},
+		{
+			"key": "regel-vorjahresabweichung",
+			"record_type_key": "pruefregel",
+			"title": "Vorjahresabweichung Bilanzposition",
+			"values": {
+				"bereich": "Jahresabschluss",
+				"prueflogik": "Vorjahreswert und aktueller Wert je Bilanzposition vergleichen. Abweichungen über 50 % oder über 25.000 € als Prüfhinweis auslösen.",
+				"schwellenwert": "> 50 % oder > 25.000 €",
+				"quelle": "Berufsständische Checkliste zur Plausibilitätsbeurteilung",
+				"aktiv": true
+			}
+		},
+		{
+			"key": "regel-gesellschafter",
+			"record_type_key": "pruefregel",
+			"title": "Forderungen an Gesellschafter",
+			"values": {
+				"bereich": "Jahresabschluss",
+				"prueflogik": "Forderungen an Gesellschafter mit Vorjahresvergleich prüfen. Entstehung, vertragliche Grundlagen und steuerliche Behandlung sind fachlich zu prüfen.",
+				"schwellenwert": "Bestand > 0 € mit deutlicher Veränderung",
+				"quelle": "Eigene Prüfpraxis",
+				"aktiv": true
+			}
+		},
+		{
+			"key": "regel-rohertrag",
+			"record_type_key": "pruefregel",
+			"title": "Rohertragsmarge im Vorjahresvergleich",
+			"values": {
+				"bereich": "Finanzbuchhaltung",
+				"prueflogik": "Rohertragsmarge je Mandant im Vorjahresvergleich. Rückgänge über 5 Prozentpunkte als auffällig kennzeichnen und die Ursache benennen.",
+				"schwellenwert": "> 5 Prozentpunkte",
+				"quelle": "Berufsständische Checkliste zur Plausibilitätsbeurteilung",
+				"aktiv": true
+			}
+		},
+		{
+			"key": "regel-einmalzahlung-lohn",
+			"record_type_key": "pruefregel",
+			"title": "Einmalzahlung im Lohn",
+			"values": {
+				"bereich": "Lohn",
+				"prueflogik": "Monatsabrechnungen gegen Vormonat und Vorjahr prüfen. Einmalzahlungen, Änderungen der Sozialversicherungspflicht und Unregelmäßigkeiten in der individuellen Abrechnung kennzeichnen.",
+				"schwellenwert": "> 30 % gegenüber dem Vormonat",
+				"quelle": "Berufsständische Checkliste zur Plausibilitätsbeurteilung",
+				"aktiv": true
+			}
+		},
+		{
+			"key": "regel-ust-13b",
+			"record_type_key": "pruefregel",
+			"title": "§ 13b UStG / igE",
+			"values": {
+				"bereich": "Steuererklärung",
+				"prueflogik": "Rechnungen mit innergemeinschaftlichem Erwerb oder § 13b UStG gegen die USt-Voranmeldungen und die Uid-Prüfungen abgleichen.",
+				"schwellenwert": "Immer prüfen",
+				"quelle": "Berufsständische Checkliste zur Plausibilitätsbeurteilung",
+				"aktiv": true
+			}
+		},
+		{
+			"key": "regel-vollstaendigkeit",
+			"record_type_key": "pruefregel",
+			"title": "Vollständigkeit der Kontierung",
+			"values": {
+				"bereich": "Finanzbuchhaltung",
+				"prueflogik": "Kontierung gegen die Vollständigkeitsprüfung der Belege laufen lassen. Fehlende Kontierungen als Prüfhinweis auslösen.",
+				"schwellenwert": "Immer prüfen",
+				"quelle": "Eigene Prüfpraxis",
+				"aktiv": true
+			}
+		},
+		{
+			"key": "regel-fehlende-vorjahrespositionen",
+			"record_type_key": "pruefregel",
+			"title": "Fehlende Vorjahrespositionen",
+			"values": {
+				"bereich": "Jahresabschluss",
+				"prueflogik": "Vorjahrespositionen gegen den aktuellen Abschluss vergleichen. Verschwundene Positionen als Prüfhinweis auslösen.",
+				"schwellenwert": "Vorjahresposition > 0 € → aktueller Wert 0 €",
+				"quelle": "Berufsständische Checkliste zur Plausibilitätsbeurteilung",
+				"aktiv": true
+			}
+		},
+		{
+			"key": "prueflauf-bau-gmbh",
+			"record_type_key": "prueflauf",
+			"title": "Prüflauf Jahresabschluss 2026 — Beispiel Bau GmbH",
+			"status": "Bericht erstellt",
+			"date": 1792060800,
+			"values": {
+				"mandant": { "record_key": "mandant-bau-gmbh" },
+				"bereich": "Jahresabschluss",
+				"pruefzeitraum": "GJ 2026, Vorjahr 2025",
+				"pruefbericht": "Prüflauf gegen 8 aktive Prüfregeln. 41 Bilanz- und GuV-Positionen geprüft, 4 Auffälligkeiten mit Regel und Zahlen. Forderungen an Gesellschafter: Vorjahr 18.400 €, aktuell 96.500 € (+78.100 €) — Entstehungsgrund, vertragliche Grundlagen und steuerliche Behandlung fachlich prüfen. Rohertragsmarge gesunken (31,2 % → 24,1 %), Sonstige Verbindlichkeiten entfallen, Rückstellungen erhöht.",
+				"fachliche_pruefung": "Zuständig: Steuerberater. Prüflauf ist vorbereitet, die fachliche Bewertung und die Entscheidung bleiben beim Steuerberater.",
+				"zustaendig": "StB Frau Weber"
+			}
+		},
+		{
+			"key": "prueflauf-handwerk-ko",
+			"record_type_key": "prueflauf",
+			"title": "Prüflauf Lohn 2026 — Muster Handwerk GmbH & Co. KG",
+			"status": "In Prüfung",
+			"date": 1792147200,
+			"values": {
+				"mandant": { "record_key": "mandant-handwerk-gmbh-co" },
+				"bereich": "Lohn",
+				"pruefzeitraum": "Januar–September 2026",
+				"pruefbericht": "Monatsabrechnungen gegen Vormonat und Vorjahr geprüft. Zwei Einmalzahlungen (Januar, Juli) und eine Änderung der Sozialversicherungspflicht erkannt. Die fachliche Bewertung und die Entscheidung bleiben beim Steuerberater.",
+				"fachliche_pruefung": "Zuständig: StB Herr Kaya. Prüflauf ist vorbereitet, die fachliche Bewertung und die Entscheidung bleiben beim Steuerberater.",
+				"zustaendig": "StB Herr Kaya"
+			}
+		},
+		{
+			"key": "prueflauf-notar-gmbh",
+			"record_type_key": "prueflauf",
+			"title": "Prüflauf EÜR 2026 — Beispiel Notar GmbH",
+			"status": "Offen",
+			"date": 1792233600,
+			"values": {
+				"mandant": { "record_key": "mandant-notar" },
+				"bereich": "EÜR",
+				"pruefzeitraum": "GJ 2026, Vorjahr 2025",
+				"pruefbericht": "Erster Regelabgleich läuft: Kostenpositionen werden gegen das Vorjahr geprüft. Eine außergewöhnliche Veränderung ist bereits als Prüfhinweis erfasst.",
+				"fachliche_pruefung": "Zuständig: StB Frau Weber. Prüflauf ist angelegt, die fachliche Bewertung und die Entscheidung bleiben beim Steuerberater.",
+				"zustaendig": "StB Frau Weber"
+			}
+		},
+		{
+			"key": "prueflauf-steuererklaerung",
+			"record_type_key": "prueflauf",
+			"title": "Prüflauf Steuererklärung 2025 — Beispiel Bau GmbH",
+			"status": "Offen",
+			"date": 1792233600,
+			"values": {
+				"mandant": { "record_key": "mandant-bau-gmbh" },
+				"bereich": "Steuererklärung",
+				"pruefzeitraum": "VJ 2025",
+				"pruefbericht": "Wartet auf den Export der Steuererklärung aus dem Kanzleisystem. Die ersten Prüfregeln (§ 13b UStG / igE, Vorjahresvergleich, Verprobung mit dem Jahresabschluss) stehen bereit.",
+				"fachliche_pruefung": "Zuständig: StB Frau Weber. Prüflauf ist angelegt, die fachliche Bewertung und die Entscheidung bleiben beim Steuerberater.",
+				"zustaendig": "StB Frau Weber"
+			}
+		},
+		{
+			"key": "prueflauf-fibu",
+			"record_type_key": "prueflauf",
+			"title": "Prüflauf Fibu Q3 2026 — Beispiel Bau GmbH",
+			"status": "In Prüfung",
+			"date": 1792147200,
+			"values": {
+				"mandant": { "record_key": "mandant-bau-gmbh" },
+				"bereich": "Finanzbuchhaltung",
+				"pruefzeitraum": "Q3 2026, Vorjahr Q3 2025",
+				"pruefbericht": "Quartalsbuchungen gegen das Vorjahr geprüft: neue oder ungewöhnliche Konten, hohe Einzelbuchungen, Umsatz- und Rohertragsentwicklung, Debitoren und Kreditoren sowie USt-Steuerschlüssel. Das Quartal läuft im Regelabgleich; die Rohertragsentwicklung ist im Jahresabschluss-Prüflauf als Prüfhinweis erfasst.",
+				"fachliche_pruefung": "Zuständig: StB Herr Kaya. Prüflauf läuft, die fachliche Bewertung und die Entscheidung bleiben beim Steuerberater.",
+				"zustaendig": "StB Herr Kaya"
+			}
+		},
+		{
+			"key": "pruefhinweis-gesellschafter",
+			"record_type_key": "pruefhinweis",
+			"title": "Prüfhinweis: Forderungen an Gesellschafter",
+			"status": "Offen",
+			"date": 1792233600,
+			"values": {
+				"prueflauf": { "record_key": "prueflauf-bau-gmbh" },
+				"bereich": "Jahresabschluss",
+				"position": "Forderungen an Gesellschafter",
+				"pruefregel": { "record_key": "regel-gesellschafter" },
+				"schwere": "Erheblich",
+				"vorjahreswert": 18400,
+				"aktueller_wert": 96500,
+				"veraenderung": "+78.100 € (+424 %)",
+				"pruefauftrag": "Erhebliche Veränderung gegenüber dem Vorjahr. Entstehungsgrund, vertragliche Grundlagen und steuerliche Behandlung fachlich prüfen.",
+				"wuerdigung": "Zuständig: StB Frau Weber. Die Prüfengine hat die Abweichung erkannt, die fachliche Bewertung und die Entscheidung bleiben beim Steuerberater.",
+				"zustaendig": "StB Frau Weber"
+			}
+		},
+		{
+			"key": "pruefhinweis-rohertrag",
+			"record_type_key": "pruefhinweis",
+			"title": "Prüfhinweis: Rohertragsmarge gesunken",
+			"status": "In Prüfung",
+			"date": 1792233600,
+			"values": {
+				"prueflauf": { "record_key": "prueflauf-bau-gmbh" },
+				"bereich": "Finanzbuchhaltung",
+				"position": "Rohertragsmarge",
+				"pruefregel": { "record_key": "regel-rohertrag" },
+				"schwere": "Auffällig",
+				"vorjahreswert": 31.2,
+				"aktueller_wert": 24.1,
+				"veraenderung": "-7,1 Prozentpunkte",
+				"pruefauftrag": "Rohertragsmarge gesunken. Ursache (Preis, Material, Produktmix) prüfen und die Plausibilität der neuen Marge fachlich bewerten.",
+				"wuerdigung": "Zuständig: StB Herr Kaya. Die Prüfengine hat die Abweichung erkannt, die fachliche Bewertung und die Entscheidung bleiben beim Steuerberater.",
+				"zustaendig": "StB Herr Kaya"
+			}
+		},
+		{
+			"key": "pruefhinweis-lohn",
+			"record_type_key": "pruefhinweis",
+			"title": "Prüfhinweis: Einmalzahlung im Lohn",
+			"status": "Offen",
+			"date": 1792233600,
+			"values": {
+				"prueflauf": { "record_key": "prueflauf-handwerk-ko" },
+				"bereich": "Lohn",
+				"position": "Einmalzahlung im Juli",
+				"pruefregel": { "record_key": "regel-einmalzahlung-lohn" },
+				"schwere": "Auffällig",
+				"vorjahreswert": 0,
+				"aktueller_wert": 4800,
+				"veraenderung": "+4.800 € (Einmalzahlung)",
+				"pruefauftrag": "Einmalzahlung im Juli. Einmaligkeit, arbeitsvertragliche Grundlage und sozialversicherungsrechtliche Behandlung prüfen.",
+				"wuerdigung": "Zuständig: StB Herr Kaya. Die Prüfengine hat die Abweichung erkannt, die fachliche Bewertung und die Entscheidung bleiben beim Steuerberater.",
+				"zustaendig": "StB Herr Kaya"
+			}
+		},
+		{
+			"key": "pruefhinweis-fehlende-vorjahresposition",
+			"record_type_key": "pruefhinweis",
+			"title": "Prüfhinweis: Verschwundene Vorjahresposition",
+			"status": "In Prüfung",
+			"date": 1792233600,
+			"values": {
+				"prueflauf": { "record_key": "prueflauf-bau-gmbh" },
+				"bereich": "Jahresabschluss",
+				"position": "Sonstige Verbindlichkeiten",
+				"pruefregel": { "record_key": "regel-fehlende-vorjahrespositionen" },
+				"schwere": "Auffällig",
+				"vorjahreswert": 14800,
+				"aktueller_wert": 0,
+				"veraenderung": "-14.800 € (Vorjahresposition entfällt)",
+				"pruefauftrag": "Vorjahresposition entfallen. Grund für den Wegfall und die Auswirkung auf die Ertragslage prüfen.",
+				"wuerdigung": "Zuständig: StB Frau Weber. Die Prüfengine hat die Abweichung erkannt, die fachliche Bewertung und die Entscheidung bleiben beim Steuerberater.",
+				"zustaendig": "StB Frau Weber"
+			}
+		},
+		{
+			"key": "pruefhinweis-rueckstellungen",
+			"record_type_key": "pruefhinweis",
+			"title": "Prüfhinweis: Rückstellungen erhöht",
+			"status": "Offen",
+			"date": 1792233600,
+			"values": {
+				"prueflauf": { "record_key": "prueflauf-bau-gmbh" },
+				"bereich": "Jahresabschluss",
+				"position": "Rückstellungen",
+				"pruefregel": { "record_key": "regel-vorjahresabweichung" },
+				"schwere": "Auffällig",
+				"vorjahreswert": 42000,
+				"aktueller_wert": 68500,
+				"veraenderung": "+26.500 € (+63 %)",
+				"pruefauftrag": "Rückstellungen deutlich erhöht. Anlass, Umfang und Passung zur wirtschaftlichen Lage des Mandanten fachlich prüfen.",
+				"wuerdigung": "Zuständig: StB Frau Weber. Die Prüfengine hat die Abweichung erkannt, die fachliche Bewertung und die Entscheidung bleiben beim Steuerberater.",
+				"zustaendig": "StB Frau Weber"
+			}
+		},
+		{
+			"key": "dateneingang-export-bau",
+			"record_type_key": "dateneingang",
+			"title": "Export Jahresabschluss 2026 — Beispiel Bau GmbH",
+			"status": "Verarbeitet",
+			"date": 1792147200,
+			"values": {
+				"quelle": "Kanzleisystem-Export Jahresabschluss",
+				"zeitraum": "GJ 2026, Vorjahr 2025",
+				"inhalt": "41 Bilanz- und GuV-Positionen mit Vorjahreswerten. Der Dateneingang ist als Record mit Relation zum Prüflauf gespeichert.",
+				"anhaenge": "jahresabschluss-2026.csv",
+				"prueflauf": { "record_key": "prueflauf-bau-gmbh" }
+			}
+		},
+		{
+			"key": "regel-kostenposition-euer",
+			"record_type_key": "pruefregel",
+			"title": "Kostenpositionen im Vorjahresvergleich",
+			"values": {
+				"bereich": "EÜR",
+				"prueflogik": "Kostenpositionen der EÜR gegen das Vorjahr vergleichen. Außergewöhnliche Veränderungen als Prüfhinweis auslösen und die Plausibilität der Position fachlich prüfen lassen.",
+				"schwellenwert": "> 50 % oder > 10.000 €",
+				"quelle": "Berufsständische Checkliste zur Plausibilitätsbeurteilung",
+				"aktiv": true
+			}
+		},
+		{
+			"key": "dateneingang-export-lohn",
+			"record_type_key": "dateneingang",
+			"title": "Export Lohn 2026 — Muster Handwerk GmbH & Co. KG",
+			"status": "Verarbeitet",
+			"date": 1792233600,
+			"values": {
+				"quelle": "Kanzleisystem-Export Lohn",
+				"zeitraum": "Januar–September 2026",
+				"inhalt": "Monatsabrechnungen mit Vormonats- und Vorjahresvergleich. Der Dateneingang ist als Record mit Relation zum Prüflauf gespeichert.",
+				"anhaenge": "lohn-2026.csv",
+				"prueflauf": { "record_key": "prueflauf-handwerk-ko" }
+			}
+		},
+		{
+			"key": "dateneingang-wiki-checkliste",
+			"record_type_key": "dateneingang",
+			"title": "Kanzlei-Wiki: Checkliste Plausibilitätsbeurteilung",
+			"status": "Verarbeitet",
+			"date": 1792060800,
+			"values": {
+				"quelle": "Kanzlei-Wiki",
+				"zeitraum": "Fassung 04/2026",
+				"inhalt": "Interne Checkliste mit Prüfpunkten je Bilanz- und GuV-Position — die Grundlage der hinterlegten Prüfregeln. Die berechtigte Wissenssuche antwortet mit Quellenangabe aus den freigegebenen Kanzleiquellen; was jemand im Kanzleisystem nicht sehen dürfte, sieht er auch hier nicht.",
+				"prueflauf": { "record_key": "prueflauf-bau-gmbh" }
+			}
+		},
+		{
+			"key": "pruefhinweis-kostenposition",
+			"record_type_key": "pruefhinweis",
+			"title": "Prüfhinweis: Außergewöhnliche Kostenposition",
+			"status": "Offen",
+			"date": 1792233600,
+			"values": {
+				"prueflauf": { "record_key": "prueflauf-notar-gmbh" },
+				"bereich": "EÜR",
+				"position": "Reparaturaufwand",
+				"pruefregel": { "record_key": "regel-kostenposition-euer" },
+				"schwere": "Auffällig",
+				"vorjahreswert": 9800,
+				"aktueller_wert": 27400,
+				"veraenderung": "+17.600 € (+180 %)",
+				"pruefauftrag": "Außergewöhnliche Veränderung gegenüber dem Vorjahr. Anlass, Zuordnung und Abzugsfähigkeit der Position fachlich prüfen.",
+				"wuerdigung": "Zuständig: StB Frau Weber. Die Prüfengine hat die Abweichung erkannt, die fachliche Bewertung und die Entscheidung bleiben beim Steuerberater.",
+				"zustaendig": "StB Frau Weber"
+			}
+		}
+	],
+	"version": "1.0.0"
+}

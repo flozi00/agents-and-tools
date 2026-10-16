@@ -249,6 +249,13 @@
       "description": "Run notarial property purchases from intake to transfer of ownership: an agent reads client and broker data, lists missing details, fills the contract template and watches every completion deadline.",
       "version": "1.0.0",
       "category": "Legal"
+    },
+    {
+      "id": "steuerkanzlei-pruefplattform",
+      "name": "Tax firm: Plausibility & review platform",
+      "description": "Run plausibility checks on your own tax, accounting, payroll and year-end data: saved check rules and prior-year comparisons flag the anomalies, the assistant drafts a review note with the triggering rule and the numbers, and the professional decision stays with your team.",
+      "version": "1.0.0",
+      "category": "Tax"
     }
   ]
 }
