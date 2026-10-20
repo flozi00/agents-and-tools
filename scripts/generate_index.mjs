@@ -89,7 +89,12 @@ export function readTool(root, id) {
 	return { id, content, frontmatter: frontmatter(content), format: 'python' };
 }
 // Keys an exported app carries that tie it to one installation.
-export const APP_LOCAL_KEYS = ['access_grants', 'exported_at', 'source_project_id', 'source_project_name'];
+export const APP_LOCAL_KEYS = [
+	'access_grants',
+	'exported_at',
+	'source_project_id',
+	'source_project_name'
+];
 export const APP_ID = /^[a-z0-9][a-z0-9-]{0,63}$/;
 export function readApp(root, id) {
 	if (!APP_ID.test(id)) throw new Error(`app id "${id}" must be lowercase kebab-case`);
@@ -142,6 +147,8 @@ export function generateIndex(root = HUB) {
 			throw new Error(`assistants/${id}: "id" must equal the directory name`);
 		for (const key of ['name', 'version', 'description', 'system_prompt'])
 			if (!truthy(template[key])) throw new Error(`assistants/${id}: "${key}" is required`);
+		if (typeof template.description !== 'string' || !template.description.trim())
+			throw new Error(`assistants/${id}: "description" must be non-empty text`);
 		for (const key of ['base_model_id', 'access_grants', 'access_control', 'knowledgeBaseIds'])
 			if (Object.hasOwn(template, key))
 				throw new Error(`assistants/${id}: "${key}" is not portable and not allowed in templates`);

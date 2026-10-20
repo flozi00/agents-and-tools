@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import test from 'node:test';
@@ -21,6 +21,25 @@ const python =
 	'"""\ntitle: Legacy tool\ndescription: Kept legacy description\nversion: 2.0\nrequirements: requests\n"""\nclass Tools: pass\n';
 const native = '{"runtime":"primeline-native","version":1,"tool":"calculator"}';
 const metadata = { title: 'Rechner', description: 'Exakte Rechnung', version: '1.0.1' };
+
+test('every published assistant has a description in its template and discovery index', () => {
+	const root = new URL('../', import.meta.url);
+	const index = JSON.parse(readFileSync(new URL('index.json', root), 'utf8'));
+	for (const directory of readdirSync(new URL('assistants/', root), { withFileTypes: true })) {
+		if (!directory.isDirectory()) continue;
+		const template = JSON.parse(
+			readFileSync(new URL(`assistants/${directory.name}/assistant.json`, root), 'utf8')
+		);
+		assert.equal(typeof template.description, 'string', `${directory.name}: missing description`);
+		assert.ok(template.description.trim(), `${directory.name}: empty description`);
+		assert.equal(
+			index.assistants.find((entry) => entry.id === template.id)?.description,
+			template.description,
+			`${directory.name}: discovery description is missing or outdated`
+		);
+	}
+});
+
 function tool(root, id = 'calculator') {
 	write(root, `tools/${id}/tool.json`, native);
 	write(root, `tools/${id}/metadata.json`, JSON.stringify(metadata));
@@ -108,7 +127,10 @@ test('index keeps assistant portability, identifier and dependency refusals', (t
 		{ knowledgeBaseIds: [] },
 		{ tools: ['missing'] },
 		{ id: 'other' },
-		{ system_prompt: '' }
+		{ system_prompt: '' },
+		{ description: undefined },
+		{ description: '   ' },
+		{ description: 7 }
 	]) {
 		const root = fixture(t);
 		tool(root);

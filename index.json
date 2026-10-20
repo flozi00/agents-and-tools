@@ -4,8 +4,8 @@
     {
       "id": "dokumenten-assistent-d3",
       "name": "Dokumenten-Assistent (d.3)",
-      "description": "Recherchiert im Dokumentenmanagement d.velop d.3 — findet Dokumente per Volltextsuche, öffnet Akten über das Aktenzeichen und fasst PDF-, Word- und PowerPoint-Inhalte zusammen.",
-      "version": "1.0.0",
+      "description": "Zuständig für Recherche in d.velop d.3. Nutzen zum Finden von Akten und Zusammenfassen geladener Dokumente. Nicht für Änderungen an Akten.",
+      "version": "1.0.1",
       "tools": [
         "d3_documents"
       ]
@@ -13,15 +13,15 @@
     {
       "id": "email-profi",
       "name": "E-Mail-Profi",
-      "description": "Formuliert und überarbeitet professionelle E-Mails auf Deutsch — von Stichpunkten zur versandfertigen Nachricht.",
-      "version": "1.0.0",
+      "description": "Zuständig für geschäftliche E-Mail-Texte auf Deutsch. Nutzen zum Formulieren und Überarbeiten von Nachrichten. Nicht für den Versand oder die Postfachverwaltung.",
+      "version": "1.0.1",
       "tools": []
     },
     {
       "id": "finanz-assistent",
       "name": "Finanz-Assistent",
-      "description": "Hilft bei kaufmännischen Rechnungen und prüft Zahlungsdaten — rechnet exakt mit Werkzeugen statt zu schätzen.",
-      "version": "1.0.0",
+      "description": "Zuständig für kaufmännische Berechnungen und formale IBAN-Prüfungen. Nutzen bei Netto, Brutto, Skonto und Zahlungsdaten. Nicht für Steuer-, Rechts- oder Anlageberatung.",
+      "version": "1.0.1",
       "tools": [
         "calculator",
         "iban_validator"
@@ -30,8 +30,8 @@
     {
       "id": "geodaten-assistent",
       "name": "Geodaten-Assistent",
-      "description": "Beantwortet Ortsfragen mit OpenStreetMap — findet Koordinaten zu Adressen, berechnet Entfernungen, prüft die Lage in Stadtteilen oder Gemeindegrenzen und zeichnet das Ergebnis in eine Karte.",
-      "version": "1.0.0",
+      "description": "Zuständig für Ortsfragen mit OpenStreetMap. Nutzen für Adressen, Luftlinienentfernungen, Gebietsprüfungen und Karten. Nicht für Fahrtrouten oder Fahrtzeiten.",
+      "version": "1.0.1",
       "tools": [
         "openstreetmap"
       ]
@@ -39,8 +39,8 @@
     {
       "id": "gitlab-entwickler",
       "name": "GitLab-Entwickler",
-      "description": "Arbeitet direkt in GitLab-Repositories — liest Code, legt Arbeitsbranches an, committet Änderungen, öffnet Merge Requests und untersucht fehlgeschlagene CI-Pipelines.",
-      "version": "1.0.0",
+      "description": "Zuständig für Softwarearbeit in GitLab. Nutzen für Codeänderungen, Issues, Merge Requests und die Analyse von CI-Fehlern. Nicht zum Starten, Wiederholen oder Abbrechen von Pipelines.",
+      "version": "1.0.1",
       "tools": [
         "gitlab_repo",
         "gitlab_ci"
@@ -49,8 +49,8 @@
     {
       "id": "it-sicherheit-vergabe",
       "name": "IT-Sicherheit & Vergabe",
-      "description": "Gleicht Sicherheitsanforderungen aus Ausschreibungen und Konzepten gegen die BSI-Stand-der-Technik-Bibliothek ab und liefert zitierfähige Controls samt Referenz.",
-      "version": "1.0.0",
+      "description": "Zuständig für den Abgleich von IT-Sicherheitsanforderungen mit BSI-Katalogen. Nutzen für Ausschreibungen und zitierfähige Control-Referenzen. Nicht für Vergabeentscheidungen oder Rechtsberatung.",
+      "version": "1.0.1",
       "tools": [
         "bsi_stand_der_technik"
       ]
@@ -58,8 +58,8 @@
     {
       "id": "ratsinfo-assistent",
       "name": "Ratsinfo-Assistent",
-      "description": "Durchsucht das Ratsinformationssystem (ALLRIS) nach Vorlagen, fasst sie samt Beschlussvorschlag und Beschlusstexten zusammen und listet die Anlagen auf.",
-      "version": "1.0.0",
+      "description": "Zuständig für Recherche im Ratsinformationssystem ALLRIS. Nutzen zum Finden und Zusammenfassen von Vorlagen, Beschlüssen und Anlagen. Nicht für das Verfassen oder Ändern von Beschlüssen.",
+      "version": "1.0.1",
       "tools": [
         "allris_vorlagen"
       ]
@@ -67,8 +67,8 @@
     {
       "id": "rechtsassistent-nrw",
       "name": "Rechtsassistent NRW",
-      "description": "Recherchiert in NRW-Landesrecht, Bundesrecht und Rechtsprechung — findet einschlägige Normen, zitiert Paragraphen im Wortlaut und nennt zu jeder Aussage die Fundstelle.",
-      "version": "1.0.0",
+      "description": "Zuständig für Recherche in NRW-Landesrecht, Bundesrecht und Rechtsprechung. Nutzen zum Finden und Zusammenfassen belegter Rechtsquellen. Nicht für verbindliche Rechtsberatung im Einzelfall.",
+      "version": "1.0.1",
       "tools": [
         "recht_nrw",
         "gesetze_im_internet",
@@ -78,8 +78,8 @@
     {
       "id": "sensordaten-assistent",
       "name": "Sensordaten-Assistent",
-      "description": "Fragt Messwerte aus einer Niotix-Plattform ab (Smart-City-Sensorik) und stellt Zeitreihen als Tabelle mit Quellenangabe dar.",
-      "version": "1.0.0",
+      "description": "Zuständig für Messwerte aus Niotix. Nutzen zum Finden von Sensoren und Abrufen zeitbezogener Messgrößen. Nicht zur Steuerung oder Konfiguration von Sensoren.",
+      "version": "1.0.1",
       "tools": [
         "niotix_sensors"
       ]
@@ -87,8 +87,8 @@
     {
       "id": "tabellen-analyst",
       "name": "Tabellen-Analyst",
-      "description": "Wertet angehängte Excel-, CSV- und PDF-Tabellen aus — Spaltenprofil, Pivot-Auswertungen, Zeitreihen und statistische Tests, gerechnet statt geschätzt.",
-      "version": "1.0.0",
+      "description": "Zuständig für angehängte Excel-, CSV- und PDF-Tabellen. Nutzen für Datenprofile, Pivot-Auswertungen, Zeitreihen und statistische Tests. Nicht für unbelegte Schätzungen oder Änderungen an Quelldateien.",
+      "version": "1.0.1",
       "tools": [
         "table_analysis"
       ]
@@ -96,8 +96,8 @@
     {
       "id": "wiki-assistent",
       "name": "Wiki-Assistent",
-      "description": "Beantwortet Fragen aus einem MediaWiki — durchsucht den Volltext, folgt internen Verlinkungen, liest PDF-Anhänge aus und zitiert jede Aussage mit Seitenangabe.",
-      "version": "1.0.0",
+      "description": "Zuständig für Recherche in MediaWiki. Nutzen zum Finden und Zusammenfassen von Wiki-Seiten und Anhängen mit Quellen. Nicht für das Bearbeiten oder Veröffentlichen von Wiki-Inhalten.",
+      "version": "1.0.1",
       "tools": [
         "mediawiki"
       ]

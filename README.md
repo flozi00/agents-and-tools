@@ -83,6 +83,14 @@ Optional keys: `profile_image_url` (https URL or data URI), `capabilities`,
 `builtin_tools` (category toggles, e.g. `{ "web": true }`), `apps` (hub app ids;
 each is created as a new app when the assistant is first installed).
 
+Every assistant needs a nonempty text `description`. Keep it short and actionable:
+“Responsible for … Use when … Not for …” (German: “Zuständig für … Nutzen bei …
+Nicht für …”). Describe actual tools and responsibilities, including exclusions;
+do not copy the system prompt. Discovery shows this text to people and agents.
+The index generator refuses missing, blank and non-text descriptions. Bump the
+assistant version and regenerate the index when changing its description so
+installed assistants can receive the update through the existing update flow.
+
 Portability rules — assistants must work on every installation, so a template
 **never** contains: a base model (chosen at install time), access grants,
 knowledge bases, or references to tool servers / MCP connections. `tools` may
